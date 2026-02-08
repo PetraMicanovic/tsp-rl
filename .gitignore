@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / Editors
+.vscode/
+.idea/
+
+# Reinforcement Learning outputs
+results/
+logs/
+runs/
+checkpoints/
+models/
+saved_models/
+
+# Metrics and experiment data
+rewards/
+*.npy
+
+# Temporary & debug files
+*.log
+*.tmp
+*.bak
+
+# Packaging
+*.egg-info/
+dist/
+build/
+
