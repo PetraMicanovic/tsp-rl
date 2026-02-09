@@ -1,8 +1,5 @@
 {
   "environment": {
-    "grid_width": 100,
-    "grid_height": 100,
-
     "start_position": [0, 0],
     "goal_position": [100, 100],
 
@@ -15,34 +12,16 @@
 
     "state_representation": "euclidean_distances",
 
-    "action_space": {
-      "type": "8-directional",
-      "actions": {
-        "UP": [0, 1],
-        "DOWN": [0, -1],
-        "LEFT": [-1, 0],
-        "RIGHT": [1, 0],
-        "UP_RIGHT": [1, 1],
-        "UP_LEFT": [-1, 1],
-        "DOWN_RIGHT": [1, -1],
-        "DOWN_LEFT": [-1, -1]
-      }
-    },
-
     "random_seed": 42
   },
 
   "reward_function": {
-    "cardinal_step_cost": -1.0, 
-    "diagonal_step_cost": -1.414, 
-    "goal_reward": 100.0,
-    "out_of_bounds_penalty": -50.0
+    "type": "negative_euclidean_distance",
+    "invalid_action_penalty": -50.0
   },
 
   "training": {
-    "episodes": 5000,
-    "max_steps_per_episode": 500,
-
+    "episodes": 3000,
     "learning_rate": 0.1,
     "discount_factor": 0.99,
 
@@ -65,8 +44,6 @@
     "save_results": true,
     "save_final_paths": true,
     "save_reward_curves": true,
-
-    "plot_convergence": true,
     "compare_algorithms": true,
 
     "output_directory": "results"
