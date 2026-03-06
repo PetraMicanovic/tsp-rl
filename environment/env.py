@@ -134,6 +134,7 @@ class TSPEnvironment:
 
         # Revisiting node
         if action in self.visited:
+            self.steps += 1
             reward = self.invalid_action_penalty
             observation = self._get_observation()
             return observation, reward, terminated, truncated, {}
