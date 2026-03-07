@@ -17,22 +17,41 @@ class BaseAgent(ABC):
         self.Q = {}
 
     def get_state(self):
-        visited_tuple = tuple(self.env.visited)
+        visited_tuple = tuple(sorted(self.env.visited))
 
         state = (self.env.current_node, visited_tuple)
 
         return state
     
+    def update_q(self, state, action, value):
+        if state not in self.Q:
+            self.Q[state] = {}
+
+        self.Q[state][action] = value
+
     def get_q_value(self, state, action):
         if state not in self.Q:
             self.Q[state] = {}
 
-        if state not in self.Q[state]:
+        if action not in self.Q[state]:
             self.Q[state][action] = 0.0
 
         return self.Q[state][action]
+    
+    def get_valid_actions(self):
+        valid_actions = []
+
+        for action in range(self.env.num_points):
+            node_index = action + 1
+
+            if node_index not in self.env.visited:
+                valid_actions.append(action)
+
+        return valid_actions
 
     def epsilon_greedy(self, state, valid_actions):
+        if not valid_actions:
+            return None
         
         # choose a random action
         if random.random() < self.epsilon:
