@@ -4,10 +4,25 @@ from gymnasium import spaces
 
 class TSPEnvironment:
     """
-    Custom RL environment for the Travelling Salesman navigation problem implemented following the Gymnasium interface.
+    Custom RL environment for the Travelling Salesman navigation problem.
+     
+    The environment follows the Gymnasium API with the standard methods:
+        - reset()
+        - step()
+        - render()
+        - close()
+    The agent starts at a fixed start node and must visit all intermediate nodes before automatically moving to the goal node.
+    The objective is to minimize the travelled distance.
     """
 
     def __init__(self, config_path = "config.json"):
+        """
+        Initializes the environment and loads configuration parameters.
+
+        Parameters
+        config_path: str
+            Path to the configuration JSON file.
+        """
 
         # Load configuration file
         with open(config_path, "r") as f:
@@ -15,10 +30,11 @@ class TSPEnvironment:
 
         environment_configuration = self.config["environment"]
 
+        # Start and goal node coordinates
         self.start = np.array(environment_configuration["start_position"], dtype=int)
         self.goal = np.array(environment_configuration["goal_position"], dtype=int)
 
-        # Sampling limits for intermediate points
+        # Coordinate limits for sampling intermediate points
         self.x_min = environment_configuration["x_min"]
         self.x_max = environment_configuration["x_max"]
         self.y_min = environment_configuration["y_min"]
@@ -27,10 +43,11 @@ class TSPEnvironment:
         self.allowed_points = environment_configuration["num_intermediate_points"]
         self.invalid_action_penalty = self.config["reward_function"]["invalid_action_penalty"]
 
+        # Random number generator for reproducibility
         self.seed = environment_configuration["random_seed"]
         self.random_generator = np.random.default_rng(self.seed)
 
-        # State variables
+        # Environment state variables
         self.nodes = None
         self.current_node = None
         self.visited = None
@@ -41,8 +58,13 @@ class TSPEnvironment:
         self.episode_reward = None
 
         self.max_points = max(self.allowed_points)
+        
+        # Action space
+        # each action corresponds to selecting one intermediate node
         self.action_space = spaces.Discrete(self.max_points)
 
+        # Observation space:
+        # [distances_to_nodes, visited_mask]
         self.observation_space = spaces.Box(
             low = 0,
             high=np.inf,
@@ -52,21 +74,25 @@ class TSPEnvironment:
 
     def reset(self, num_points = 5):
         """
-        Starts a new episode.
+        Starts a new episode by generating a new TSP instance.
 
         Parameters
-            num_points: int 
-                Number of intermediate points (5,10,15 or 20)
+        num_points: int 
+            Number of intermediate points (5,10,15 or 20)
 
         Returns:
-            observations: np.array
-            info: dict
+        observations: np.array
+            Initial observation of the environment
+        info: dict
+            Additional metadata about the episode
         """
+        # Validate number of intermediate nodes
         if num_points not in self.allowed_points:
             raise ValueError(
                 f"num_points must be one of {self.allowed_points}"
             )
         
+        # Update action space according to the selected number of nodes
         self.action_space = spaces.Discrete(num_points)
         self.num_points = num_points
 
@@ -84,14 +110,14 @@ class TSPEnvironment:
 
         points = np.array(list(points), dtype = np.float32)
 
-        # Combine start, intermediate points and goal
+        # Combine start, intermediate points and goal node
         self.nodes = np.vstack([
             self.start,
             points,
             self.goal
         ])
 
-        # Initial state
+        # Initial episode state
         self.current_node = 0
         self.visited = {0}
         self.total_distance = 0.0
@@ -104,6 +130,7 @@ class TSPEnvironment:
         self.path = [0]
 
         observation = self._get_observation()
+
         info = {
             "num_nodes": len(self.nodes),
             "goal_index": len(self.nodes)-1
@@ -115,8 +142,18 @@ class TSPEnvironment:
         """
         Executes one step in the environment.
 
-        action = index of intermediate node (0 .. num_points-1)
+        Parameters
+        action: int 
+            Index of intermediate node to visit(0 .. num_points-1)
+        
+        Returns
+        observation: np.array
+        reward: float
+        terminated: bool
+        truncated: bool
+        info: dict
         """
+        # Check for invalid action index
         if action < 0 or action >= self.num_points:
             reward = self.invalid_action_penalty
             observation = self._get_observation()
@@ -132,7 +169,7 @@ class TSPEnvironment:
 
         self.steps += 1
 
-        # Revisiting node
+        # Check if node was already visited
         if action in self.visited:
             reward = self.invalid_action_penalty
             observation = self._get_observation()
@@ -148,7 +185,8 @@ class TSPEnvironment:
         self.path.append(action)
 
         # Termination condition
-        if (len(self.visited) == len(self.nodes)- 1):
+        # Check if all intermediate nodes have been visited
+        if len(self.visited) == len(self.nodes)- 1:
             goal_index = len(self.nodes)-1
             distance  = self._euclidean_distance(self.current_node, goal_index)
             
@@ -178,10 +216,11 @@ class TSPEnvironment:
     
     def _get_observation(self):
         """
+        Construct the observation vector.
+
         Observation = [distances, visited_mask]
-        
-        distances: Euclidean distances from current node to each intermediate nodes.
-        visited_mask: 1 if node is else 0
+        distances: Euclidean distances from current node to each intermediate node.
+        visited_mask: binary indicator(1 if visited, 0 otherwise)
         """
         distances = np.zeros(self.max_points, dtype=np.float32)
         visited_mask = np.zeros(self.max_points, dtype=np.float32)
@@ -200,6 +239,9 @@ class TSPEnvironment:
         return observation
     
     def _euclidean_distance(self, i, j):
+        """
+        Computes Euclidean distance between two nodes.
+        """
         return np.sqrt(np.sum((self.nodes[i]-self.nodes[j])**2))
 
     def render(self):
@@ -210,8 +252,11 @@ class TSPEnvironment:
         print("Current node: ", self.current_node)
         print("Current position:", self.nodes[self.current_node])
         print("Visited nodes: ", self.visited)
-        print("Total distances: ", self.total_distance)
+        print("Total distance: ", self.total_distance)
         print("Path: ", self.path)
     
     def close(self):
+        """
+        Placeholder for compatibility with Gymnasium API.
+        """
         pass
