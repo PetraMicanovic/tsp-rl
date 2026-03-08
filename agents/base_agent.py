@@ -154,7 +154,7 @@ class BaseAgent(ABC):
         return best_action
     
     @abstractmethod
-    def train(self, episode):
+    def train(self, episodes, num_points = 5):
         """
         Train the agent.
 
@@ -163,6 +163,8 @@ class BaseAgent(ABC):
         Parameters
         episodes: int
             Number of training episodes.
+        num_points: int
+            Number of intermediate nodes used in the environment.
 
         Returns
         None
