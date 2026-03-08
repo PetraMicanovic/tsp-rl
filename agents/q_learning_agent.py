@@ -1,0 +1,51 @@
+from agents.base_agent import BaseAgent
+
+class QLearningAgent(BaseAgent):
+    def train(self, episodes, num_points = 5):
+        episode_rewards = []
+        
+        for episode in range(episodes):
+            # Reset environment
+            observation, _ = self.env.reset(num_points = num_points)
+
+            terminated = False
+            truncated = False
+
+            total_reward = 0.0
+
+            while not (terminated or truncated):
+
+                state = self.get_state()
+                valid_actions = self.get_valid_actions()
+                action = self.epsilon_greedy(state, valid_actions)
+
+                #Execute action
+                observation, reward, terminated, truncated, _ = self.env.step(action)
+
+                next_state = self.get_state()
+
+                next_valid_actions = self.get_valid_actions()
+
+                # Compute max Q-value for next state 
+                if next_valid_actions:
+                    max_next_q = 0
+                    for a in next_valid_actions:
+                        q = self.get_q_value(next_state, a)
+
+                        if q > max_next_q:
+                            max_next_q = q
+                else:
+                    max_next_q = 0 
+
+                current_q = self.get_q_value(state, action)
+
+                # Q-learning update rule
+                new_q = current_q + self.alpha * (reward + self.gamma * max_next_q - current_q)
+
+                self.update_q(state, action, new_q)
+
+                total_reward += reward
+
+            episode_rewards.append(total_reward)
+    
+        return episode_rewards
