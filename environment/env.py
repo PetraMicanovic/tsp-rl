@@ -71,11 +71,43 @@ class TSPEnvironment:
             shape=(2*self.max_points,),
             dtype=np.float32
         )
+    
+    def _generate_nodes(self, num_points):
+        """
+        Generate a fixed TSP instance(start + intermediate nodes + goal).
+
+        This function is called only once so that the same map is used across all training episodes.
+        """
+        points = set()
+
+        # Generate random intermediate points
+        while len(points) < num_points:
+            p = tuple(self.random_generator.integers(
+                low = [self.x_min, self.y_min],
+                high = [self.x_max + 1, self.y_max + 1],
+            ))
+
+            if p!= tuple(self.start) and p!= tuple(self.goal):
+                points.add(p)
+
+        points = np.array(list(points), dtype = np.int32)
+
+        # Combine start, intermediate points and goal node
+        # 0 -> start
+        # 1 .. num_points -> intermediate nodes
+        # last-> goal
+        self.nodes = np.vstack([
+            self.start,
+            points,
+            self.goal
+        ])
+
 
     def reset(self, num_points = 5):
         """
-        Starts a new episode by generating a new TSP instance.
-
+        Starts a new episode.
+         
+        The TSP map is generated only once and reused across episodes to ensure stable RL training.
         Parameters
         num_points: int 
             Number of intermediate points (5,10,15 or 20)
@@ -96,26 +128,8 @@ class TSPEnvironment:
         self.action_space = spaces.Discrete(num_points)
         self.num_points = num_points
 
-        points = set()
-
-        # Generate random intermediate points
-        while len(points) < num_points:
-            p = tuple(self.random_generator.integers(
-                low = [self.x_min, self.y_min],
-                high = [self.x_max + 1, self.y_max + 1],
-            ))
-
-            if p!= tuple(self.start) and p!= tuple(self.goal):
-                points.add(p)
-
-        points = np.array(list(points), dtype = np.float32)
-
-        # Combine start, intermediate points and goal node
-        self.nodes = np.vstack([
-            self.start,
-            points,
-            self.goal
-        ])
+        if self.nodes is None or (len(self.nodes)-2) != num_points:
+            self._generate_nodes(num_points)
 
         # Initial episode state
         self.current_node = 0
@@ -159,6 +173,7 @@ class TSPEnvironment:
             observation = self._get_observation()
             return observation, reward, False, False, {}
         
+        # Convert action to node index
         action = action + 1
 
         if self.nodes is None:
@@ -186,7 +201,7 @@ class TSPEnvironment:
 
         # Termination condition
         # Check if all intermediate nodes have been visited
-        if len(self.visited) == len(self.nodes)- 1:
+        if len(self.visited) == len(self.nodes) - 1:
             goal_index = len(self.nodes)-1
             distance  = self._euclidean_distance(self.current_node, goal_index)
             
@@ -198,7 +213,6 @@ class TSPEnvironment:
             
             terminated = True
 
-        
         # Truncation condition
         if self.steps >= self.max_steps:
             truncated = True
@@ -226,12 +240,13 @@ class TSPEnvironment:
         visited_mask = np.zeros(self.max_points, dtype=np.float32)
 
         # goal node excluded from observation because it is reached automatically
-        for idx, i in enumerate(range(1, len(self.nodes)-1)):
-            if i in self.visited:
+        for idx, i in range(self.num_points):
+            node_index = idx +1
+            if node_index in self.visited:
                 distances[idx] = 0.0
                 visited_mask[idx] = 1.0
             else:
-                distances[idx] = self._euclidean_distance(self.current_node,i)
+                distances[idx] = self._euclidean_distance(self.current_node,node_index)
                 visited_mask[idx] = 0.0
         
         observation = np.concatenate([distances, visited_mask])
