@@ -1,9 +1,26 @@
 from agents.base_agent import BaseAgent
 
 class QLearningAgent(BaseAgent):
+    """
+    Q-learning agent implementation.
+    """
     def train(self, episodes, num_points = 5):
+        """
+        Train the agent for a specified number of episodes.
+
+        Parameters
+        episodes: int
+            Number of training episodes.
+        num_points: int
+            Number of intermediate nodes in the environment.
+
+        Returns
+        episode_rewards: list
+            Total reward obtained in each episode.
+        """
         episode_rewards = []
         
+        # Training loop over episodes
         for episode in range(episodes):
             # Reset environment
             observation, _ = self.env.reset(num_points = num_points)
@@ -13,13 +30,14 @@ class QLearningAgent(BaseAgent):
 
             total_reward = 0.0
 
+            # Episode loop
             while not (terminated or truncated):
 
                 state = self.get_state()
                 valid_actions = self.get_valid_actions()
                 action = self.epsilon_greedy(state, valid_actions)
 
-                #Execute action
+                # Execute action
                 observation, reward, terminated, truncated, _ = self.env.step(action)
 
                 next_state = self.get_state()
