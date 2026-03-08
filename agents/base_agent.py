@@ -41,16 +41,20 @@ class BaseAgent(ABC):
 
         The state consist of:
             - current node where the agent is located
-            - tuple of visited nodes
-        The visisted nodes are sorted to ensure that the same set of visited nodes always produces the same state key.
+            - bitmask representing visited nodes
+
+        Each bit in the mask indicates whether a node has been visited.
 
         Returns
         state: tuple
-            (current_node, visited_nodes_tuple)
+            (current_node, visited_mask)
         """
-        visited_tuple = tuple(sorted(self.env.visited))
+        visited_mask = 0
 
-        state = (self.env.current_node, visited_tuple)
+        for node in self.env.visited:
+            visited_mask |=1 << node
+
+        state = (self.env.current_node, visited_mask)
 
         return state
     
@@ -104,14 +108,16 @@ class BaseAgent(ABC):
 
         Returns
         valid_actions: list[int]
-            List of action indices that correspond to unvisited nodes.
+            List of action indices corresponding to unvisited nodes.
         """
+        _, visited_mask = self.get_state()
+
         valid_actions = []
 
         for action in range(self.env.num_points):
             node_index = action + 1
 
-            if node_index not in self.env.visited:
+            if not (visited_mask & (1 << node_index)):
                 valid_actions.append(action)
 
         return valid_actions
@@ -170,4 +176,3 @@ class BaseAgent(ABC):
         None
         """
         pass
-        
