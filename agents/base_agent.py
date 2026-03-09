@@ -21,7 +21,7 @@ class BaseAgent(ABC):
         alpha: float 
             Learning rate (0 < alpha <= 1)
         gamma: float
-            Discount factor for future rewards (0 <= alpha <= 1)
+            Discount factor for future rewards (0 <= gamma <= 1)
         epsilon: float
             Exploration probability used in epsilon-greedy policy.
         """
@@ -52,11 +52,10 @@ class BaseAgent(ABC):
         visited_mask = 0
 
         for node in self.env.visited:
-            visited_mask |=1 << node
+            if 1 <= node <= self.env.num_points:
+                visited_mask |=1 << node
 
-        state = (self.env.current_node, visited_mask)
-
-        return state
+        return (self.env.current_node, visited_mask)
     
     def update_q(self, state, action, value):
         """
@@ -150,7 +149,7 @@ class BaseAgent(ABC):
         best_action = valid_actions[0]
         best_value = self.get_q_value(state,best_action)
 
-        for action in valid_actions:
+        for action in valid_actions[1:]:
             value = self.get_q_value(state, action)
 
             if value > best_value:
