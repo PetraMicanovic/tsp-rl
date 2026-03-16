@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt 
+import os
 
 class TrainingPlotter:
     """
@@ -7,15 +8,25 @@ class TrainingPlotter:
         - plotting moving average reward
         - comparing multiple algorithms on a single graph
     """
-    def __init__(self, window = 100):
+    def __init__(self, reward_dir = "results/reward_curves", comparison_dir = "results/comparisons", window = 100):
         """
         Initialize the plotter.
 
         Parameters
+        reward_dir: str
+            Directory where individual reward curves will be saved
+        comparison_dir: string
+            Directory where algorithm comparison graphs will be saved
         window: int
             Window size used for computing moving average smoothing.
         """
+        self.reward_dir = reward_dir
+        self.comparison_dir = comparison_dir
         self.window =  window
+
+        #Create directories if they do not exist
+        os.makedirs(self.reward_dir, exist_ok = True)
+        os.makedirs(self.comparison_dir, exist_ok = True)
     
     def moving_average(self, rewards):
         """
@@ -41,16 +52,22 @@ class TrainingPlotter:
             averages.append(window_avg)
         return averages
     
-    def plot_rewards(self, rewards, title = "Training rewards"):
+    def plot_rewards(self, rewards, algorithm_name, num_points):
         """
         Plot reward per episode together with the moving average curve.
 
         Parameters
         rewards: list[float]
             Reward obtained in each episode
-        title: str
-            Title of the plot
+        algorithm_name: str
+            Name of the RL algorithm
+        num_points: int
+            Number of cities used in the environment
         """
+        # Create algorithm directory 
+        save_dir = os.path.join(self.reward_dir, algorithm_name)
+        os.makedirs(save_dir, exist_ok = True)
+
         plt.figure()
         plt.plot(rewards, label = "Reward per episode")
         
@@ -60,19 +77,24 @@ class TrainingPlotter:
         
         plt.xlabel("Episode")
         plt.ylabel("Reward")
-        plt.title(title)
+        plt.title(f"{algorithm_name} ({num_points} points)")
         plt.legend()
-        plt.show()
 
-    def compare_algorithms(self, results, title = "Algorithm Comparison"):
+        filename = f"{algorithm_name}_{num_points}.png"
+        save_path = os.path.join(self.reward_dir, filename)
+
+        plt.savefig(save_path)
+        plt.close()
+
+    def compare_algorithms(self, results, num_points):
         """
         Plot comparison of multiple algorithms on a single graph.
 
         Parameters
         results: dict
             Dictionary mapping algorithm name to reward list.
-        title: str
-            Title of the plot
+        num_points: int
+            Number of points in the TSP problem
         """
         plt.figure()
 
@@ -81,6 +103,11 @@ class TrainingPlotter:
             plt.plot(smoothed, label = algorithm_name)
         plt.xlabel("Episode")
         plt.ylabel("Moving Average Reward")
-        plt.title(title)
+        plt.title(f"Algorithm Comparison ({num_points} points)")
         plt.legend()
-        plt.show()
+        
+        filename = f"comparison_{num_points}.png"
+        save_path = os.path.join(self.comparison_dir, filename)
+
+        plt.savefig(save_path)
+        plt.close()
