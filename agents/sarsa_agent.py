@@ -54,15 +54,15 @@ class SARSAAgent(BaseAgent):
                     )
 
                     self.update_q(state, action, new_q)
+                    state = next_state
+                    action = next_action
                 else:
-                    # Update rule for terminal state(no next action) 
+                    # Update rule for terminal state (no next action) 
                     current_q = self.get_q_value(state, action)
                     new_q = current_q + self.alpha * (reward - current_q)
                     self.update_q(state, action, new_q)
                     next_action = None
-                
-                state = next_state
-                action = next_action
 
             rewards_per_episode.append(total_reward)
+            self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
         return rewards_per_episode

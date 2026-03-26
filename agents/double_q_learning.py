@@ -190,4 +190,5 @@ class DoubleQLearningAgent(BaseAgent):
                     # Episode finished
                     state = next_state
             rewards_per_episode.append(total_reward)
+            self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
         return rewards_per_episode

@@ -11,7 +11,7 @@ class BaseAgent(ABC):
         - Q access and update
     """
 
-    def __init__(self, env, alpha, gamma, epsilon):
+    def __init__(self, env, alpha, gamma, epsilon, epsilon_min, epsilon_decay):
         """
         Initialize the base agent.
 
@@ -24,12 +24,18 @@ class BaseAgent(ABC):
             Discount factor for future rewards (0 <= gamma <= 1)
         epsilon: float
             Exploration probability used in epsilon-greedy policy.
+        epsilon_min: float
+            Minimum value of epsilon after decay. Prevents the agent from becoming fully greedy too early.
+        epsilon_decay: float
+            Multiplicative decay factor applied to epsilon after each episode. Controls how fast exploration decreases.
         """
 
         self.env = env
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
+        self.epsilon_min = epsilon_min
+        self.epsilon_decay = epsilon_decay
 
         # Q-table structure:
         # Q[state][action] -> Q-value

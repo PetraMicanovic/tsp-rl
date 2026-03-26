@@ -65,5 +65,5 @@ class QLearningAgent(BaseAgent):
                 total_reward += reward
 
             episode_rewards.append(total_reward)
-    
+            self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
         return episode_rewards
