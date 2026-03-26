@@ -96,7 +96,8 @@ class TSPVisualizer:
 
             line.set_data(x, y)
 
-            ax.patches.clear()
+            for p in list(ax.patches):
+                p.remove
 
             # Draw arrows showing direction of travel
             for i in range(len(partial_route) - 1):
@@ -106,10 +107,10 @@ class TSPVisualizer:
                 dx = end[0] - start[0]
                 dy = end[1] - start[1]
 
-                ax.arrow(start[0], start[1], dx, dy, head_width = 1.5, lenght_includes_head = True, color = "red", alpha = 0.7)
+                ax.arrow(start[0], start[1], dx, dy, head_width = 1.5, length_includes_head = True, color = "red", alpha = 0.7)
             return line,
 
-        ani = animation.FuncAnimation(fig, update, frames = len(route), interval = 500, blit = True)
+        ani = animation.FuncAnimation(fig, update, frames = len(route), interval = 500, blit = False)
 
         filename = f"tsp_animation_{num_points}.gif"
         save_path = os.path.join(save_dir, filename)

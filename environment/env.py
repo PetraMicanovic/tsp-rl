@@ -240,7 +240,7 @@ class TSPEnvironment:
         visited_mask = np.zeros(self.max_points, dtype=np.float32)
 
         # goal node excluded from observation because it is reached automatically
-        for idx, i in range(self.num_points):
+        for idx in range(self.num_points):
             node_index = idx +1
             if node_index in self.visited:
                 distances[idx] = 0.0
