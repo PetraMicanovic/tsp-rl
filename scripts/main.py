@@ -24,16 +24,18 @@ def create_agent(name, env, config):
     alpha = config["training"]["learning_rate"]
     gamma = config["training"]["discount_factor"]
     epsilon = config["training"]["epsilon_start"]
+    epsilon_min = config["training"]["epsilon_min"]
+    epsilon_decay = config["training"]["epsilon_decay"]
 
     if name == "sarsa":
-        return SARSAAgent(env, alpha, gamma, epsilon)
+        return SARSAAgent(env, alpha, gamma, epsilon, epsilon_min, epsilon_decay)
     elif name == "q_learning":
-        return QLearningAgent(env, alpha, gamma, epsilon)
+        return QLearningAgent(env, alpha, gamma, epsilon, epsilon_min, epsilon_decay)
     elif name == "double_q_learning":
-        return DoubleQLearningAgent(env, alpha, gamma, epsilon)
+        return DoubleQLearningAgent(env, alpha, gamma, epsilon, epsilon_min, epsilon_decay)
     elif name == "n_step_sarsa":
         n = config["algorithms"]["n_step_sarsa"]["n"]
-        return NStepSARSAAgent(env, alpha, gamma, epsilon, n)
+        return NStepSARSAAgent(env, alpha, gamma, epsilon, epsilon_min, epsilon_decay, n)
     else:
         raise ValueError(f"Unknown algorithm: {name}")
 
@@ -86,7 +88,9 @@ def main():
                 while not (terminated or truncated):
                     valid_actions = agent.get_valid_actions()
                     if not valid_actions:
-                        break
+                        terminated = True
+                        continue 
+
                     action = agent.epsilon_greedy(state, valid_actions)
 
                     obs, reward, terminated, truncated, info = env.step(action)
