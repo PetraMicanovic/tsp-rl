@@ -8,7 +8,7 @@ class DoubleQLearningAgent(BaseAgent):
         - one of the Q-tables is randomly selected for update
         - the other Q-table is used to evaluate the next action
     """
-    def __init__(self, env, alpha, gamma, epsilon):
+    def __init__(self, env, alpha, gamma, epsilon, epsilon_min, epsilon_decay):
         """
         Initialize the Double Q-Learning agent.
 
@@ -20,8 +20,12 @@ class DoubleQLearningAgent(BaseAgent):
             Discount factor for future rewards
         epsilon: float
             Exploration probability used in epsilon-greedy policy.
+        epsilon_min: float
+            Minimum value of epsilon after decay. Prevents the agent from becoming fully greedy too early.
+        epsilon_decay: float
+            Multiplicative decay factor applied to epsilon after each episode. Controls how fast exploration decreases.
         """
-        super().__init__(env, alpha, gamma, epsilon)
+        super().__init__(env, alpha, gamma, epsilon, epsilon_min, epsilon_decay)
 
         self.Q2 = {}
 

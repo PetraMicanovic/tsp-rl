@@ -5,7 +5,7 @@ class NStepSARSAAgent(BaseAgent):
     The n-step SARSA algorithm extends the standard SARSA method by using multiple future rewards (n steps) when updating Q-values.
     The update uses accumulated rewards over the next n steps.
     """
-    def __init__(self, env, alpha, gamma, epsilon, n = 10):
+    def __init__(self, env, alpha, gamma, epsilon, epsilon_min, epsilon_decay, n = 10):
         """
         Initialize the n-step SARSA agent.
 
@@ -18,10 +18,14 @@ class NStepSARSAAgent(BaseAgent):
             Discount factor for future rewards
         epsilon: float
             Exploration probability in the epsilon-greedy policy.
+        epsilon_min: float
+            Minimum value of epsilon after decay. Prevents the agent from becoming fully greedy too early.
+        epsilon_decay: float
+            Multiplicative decay factor applied to epsilon after each episode. Controls how fast exploration decreases.
         n: int
             Number of steps used to compute the n-step return
         """
-        super().__init__(env, alpha, gamma, epsilon)
+        super().__init__(env, alpha, gamma, epsilon, epsilon_min, epsilon_decay)
         self.n  = n
     
     def train(self, episodes, num_points = 5):
