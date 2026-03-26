@@ -216,14 +216,19 @@ class TSPEnvironment:
         # Truncation condition
         if self.steps >= self.max_steps:
             truncated = True
-            reward += self.invalid_action_penalty
+
+            # Check if all nodes were visited
+            if len(self.visited) != len(self.nodes) - 1:
+                # Penalty if tour is incomplete
+                reward += self.invalid_action_penalty * 2
         
         observation = self._get_observation()
         self.episode_reward +=reward
 
         info = {
             "total_distance": self.total_distance,
-            "visited_count": len(self.visited)
+            "visited_count": len(self.visited),
+            "incomplete_tour": len(self.visited) != len(self.nodes) - 1
         }
 
         return observation, reward, terminated, truncated, info
