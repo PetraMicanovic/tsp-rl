@@ -202,7 +202,7 @@ class TSPEnvironment:
         # Termination condition
         # Check if all intermediate nodes have been visited
         if len(self.visited) == len(self.nodes) - 1:
-            goal_index = len(self.nodes)-1
+            goal_index = len(self.nodes) - 1
             distance  = self._euclidean_distance(self.current_node, goal_index)
             
             self.total_distance += distance
@@ -210,6 +210,9 @@ class TSPEnvironment:
 
             self.current_node = goal_index
             self.path.append(goal_index)
+
+            # terminal penalty based on total tour distance
+            reward += - self.total_distance
             
             terminated = True
 
@@ -221,6 +224,8 @@ class TSPEnvironment:
             if len(self.visited) != len(self.nodes) - 1:
                 # Penalty if tour is incomplete
                 reward += self.invalid_action_penalty * 2
+
+            reward += -self.total_distance
         
         observation = self._get_observation()
         self.episode_reward +=reward
