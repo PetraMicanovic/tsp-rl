@@ -35,6 +35,9 @@ class QLearningAgent(BaseAgent):
 
                 state = self.get_state()
                 valid_actions = self.get_valid_actions()
+
+                if not valid_actions:
+                    break
                 action = self.epsilon_greedy(state, valid_actions)
 
                 # Execute action
@@ -45,15 +48,13 @@ class QLearningAgent(BaseAgent):
                 next_valid_actions = self.get_valid_actions()
 
                 # Compute max Q-value for next state 
-                if next_valid_actions:
-                    max_next_q = 0
-                    for a in next_valid_actions:
-                        q = self.get_q_value(next_state, a)
 
-                        if q > max_next_q:
-                            max_next_q = q
-                else:
-                    max_next_q = 0 
+                max_next_q = 0
+                for a in next_valid_actions:
+                    q = self.get_q_value(next_state, a)
+
+                    if q > max_next_q:
+                        max_next_q = q
 
                 current_q = self.get_q_value(state, action)
 
