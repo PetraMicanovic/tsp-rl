@@ -138,7 +138,7 @@ class TSPEnvironment:
         self.episode_reward = 0.0
 
         self.steps = 0
-        self.max_steps = len(self.nodes) - 1
+        self.max_steps = 2 * len(self.nodes) 
 
         # Path tracking
         self.path = [0]
@@ -223,9 +223,7 @@ class TSPEnvironment:
             # Check if all nodes were visited
             if len(self.visited) != len(self.nodes) - 1:
                 # Penalty if tour is incomplete
-                reward += self.invalid_action_penalty * 2
-
-            reward += -self.total_distance
+                reward += -self.total_distance
         
         observation = self._get_observation()
         self.episode_reward +=reward
