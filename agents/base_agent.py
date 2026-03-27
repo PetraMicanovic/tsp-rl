@@ -126,6 +126,25 @@ class BaseAgent(ABC):
                 valid_actions.append(action)
 
         return valid_actions
+    
+    def get_combined_q(self, state, action):
+        """
+        Return the estimated value of a state-action pair.
+
+        For a standard agents(Q-learning, SARSA), this is just the single Q-table value.
+        This method exists so that diffrent agents can define their own way of combining value estimates.
+        
+        Parameters
+        state: tuple
+            State key
+        action: int
+            Action index
+        
+        Returns
+        float
+            Q-value for the given state and action
+        """
+        return self.get_q_value(state, action)
 
     def epsilon_greedy(self, state, valid_actions):
         """

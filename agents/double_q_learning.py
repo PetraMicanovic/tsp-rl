@@ -69,6 +69,12 @@ class DoubleQLearningAgent(BaseAgent):
         
         self.Q2[state][action] = value
 
+    def get_combined_q(self, state, action):
+        """
+        Return combined Q-value estmate for Double Q-learning.
+        """
+        return self.get_q_value(state, action) + self.get_q2_value(state, action)
+
     def best_action_from_q(self, state, actions, q_func):
         """
         Find the action with the highest Q-value according to a given Q-function.

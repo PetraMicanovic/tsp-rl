@@ -39,11 +39,16 @@ def create_agent(name, env, config):
         raise ValueError(f"Unknown algorithm: {name}")
     
 def greedy_action(agent, state, valid_actions):
+    """
+    Select the best action deterministically.
+    This function is used only during the evaluation, after training.
+    This avoidness randomness from epsilon-greedy policy.
+    """
     best_action = valid_actions[0]
-    best_value = agent.get_q_value(state, best_action)
+    best_value = agent.get_combined_q(state, best_action)
 
     for a in valid_actions[1:]:
-        v = agent.get_q_value(state, a)
+        v = agent.get_combined_q(state, a)
         if v > best_value:
             best_value = v
             best_action = a
