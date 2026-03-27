@@ -191,8 +191,18 @@ class DoubleQLearningAgent(BaseAgent):
                     state = next_state
                     valid_actions = next_valid_actions
                 else:
-                    # Episode finished
-                    state = next_state
+                    # terminal update
+                    if random.random() < 0.5:
+                        current_q = self.get_q_value(state, action)
+                        new_q = current_q + self.alpha * (reward - current_q)
+                        self.update_q(state, action, new_q)
+                    else: 
+                        current_q = self.get_q2_value(state, action)
+                        new_q = current_q + self.alpha * (reward  - current_q)
+                        self.update_q2(state, action, new_q)
+                    
+                    break
+
             rewards_per_episode.append(total_reward)
             self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
         return rewards_per_episode
