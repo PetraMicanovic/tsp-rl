@@ -48,6 +48,11 @@ class NStepSARSAAgent(BaseAgent):
             observation, _ = self.env.reset(num_points = num_points)
             state = self.get_state()
             valid_actions = self.get_valid_actions()
+
+            if not valid_actions:
+                rewards_per_episode.append(0)
+                continue
+
             action = self.epsilon_greedy(state, valid_actions)
 
             # Store trajectory (states, actions, rewards)
@@ -74,10 +79,12 @@ class NStepSARSAAgent(BaseAgent):
                     else:
                         next_state = self.get_state()
                         next_valid_actions = self.get_valid_actions()
-                        next_action = self.epsilon_greedy(next_state, next_valid_actions)
-
-                        states.append(next_state)
-                        actions.append(next_action)
+                        if not next_valid_actions:
+                            T = t + 1
+                        else:
+                            next_action = self.epsilon_greedy(next_state, next_valid_actions)
+                            states.append(next_state)
+                            actions.append(next_action)
                 # Time index for updating Q-values
                 tau = t - self.n + 1
 
