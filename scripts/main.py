@@ -37,6 +37,18 @@ def create_agent(name, env, config):
         return NStepSARSAAgent(env, alpha, gamma, epsilon, epsilon_min, epsilon_decay, n)
     else:
         raise ValueError(f"Unknown algorithm: {name}")
+    
+def greedy_action(agent, state, valid_actions):
+    best_action = valid_actions[0]
+    best_value = agent.get_q_value(state, best_action)
+
+    for a in valid_actions[1:]:
+        v = agent.get_q_value(state, a)
+        if v > best_value:
+            best_value = v
+            best_action = a
+        
+    return best_action
 
 def main():
     config = load_config()
@@ -89,7 +101,7 @@ def main():
                         terminated = True
                         continue 
 
-                    action = agent.epsilon_greedy(state, valid_actions)
+                    action = greedy_action(agent, state, valid_actions)
 
                     obs, reward, terminated, truncated, info = env.step(action)
                     state = agent.get_state()
