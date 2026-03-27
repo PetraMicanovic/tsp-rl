@@ -5,7 +5,6 @@ import json
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from environment.env import TSPEnvironment
-from agents.base_agent import BaseAgent
 from agents.sarsa_agent import SARSAAgent
 from agents.q_learning_agent import QLearningAgent
 from agents.double_q_learning import DoubleQLearningAgent
@@ -48,7 +47,6 @@ def main():
 
     num_points_list = config["environment"]["num_intermediate_points"]
     episodes = config["training"]["episodes"]
-
     algorithms_config = config["algorithms"]
 
     # Directory to store results for comparison plots
@@ -97,10 +95,10 @@ def main():
                     state = agent.get_state()
                     route.append(env.current_node)
                 
-                visualizer = TSPVisualizer(env.nodes)
-                visualizer.plot_route(route, algorithm_name, num_points)
-
-                visualizer.animate_route(route, algorithm_name, num_points)
+                if len(route) > 1:
+                    visualizer = TSPVisualizer(env.nodes)
+                    visualizer.plot_route(route, algorithm_name, num_points)
+                    visualizer.animate_route(route, algorithm_name, num_points)
 
         if config["evaluation"]["compare_algorithms"]:
             plotter.compare_algorithms(all_results[num_points],num_points)
