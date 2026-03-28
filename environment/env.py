@@ -203,16 +203,14 @@ class TSPEnvironment:
         # Check if all intermediate nodes have been visited
         if len(self.visited) == len(self.nodes) - 1:
             goal_index = len(self.nodes) - 1
-            distance  = self._euclidean_distance(self.current_node, goal_index)
+            distance = self._euclidean_distance(self.current_node, goal_index)
             
             self.total_distance += distance
-            reward += -distance
-
             self.current_node = goal_index
             self.path.append(goal_index)
 
             # terminal penalty based on total tour distance
-            reward += - self.total_distance
+            reward += 100
             
             terminated = True
 

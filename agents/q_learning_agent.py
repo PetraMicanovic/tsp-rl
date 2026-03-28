@@ -49,12 +49,14 @@ class QLearningAgent(BaseAgent):
 
                 # Compute max Q-value for next state 
 
-                max_next_q = 0
+                max_next_q = float("-inf")
                 for a in next_valid_actions:
                     q = self.get_q_value(next_state, a)
-
                     if q > max_next_q:
                         max_next_q = q
+
+                if max_next_q == float("-inf"):
+                    max_next_q = 0
 
                 current_q = self.get_q_value(state, action)
 

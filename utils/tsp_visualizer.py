@@ -76,7 +76,7 @@ class TSPVisualizer:
 
         ax.scatter(x_points, y_points)
 
-        ax.set_xlim(min(x_points) - 5, max(y_points) + 5)
+        ax.set_xlim(min(x_points) - 5, max(x_points) + 5)
         ax.set_ylim(min(y_points) - 5, max(y_points) + 5)
 
         for i, (px, py) in enumerate(self.points):
@@ -97,7 +97,7 @@ class TSPVisualizer:
             line.set_data(x, y)
 
             for p in list(ax.patches):
-                p.remove
+                p.remove()
 
             # Draw arrows showing direction of travel
             for i in range(len(partial_route) - 1):

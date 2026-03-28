@@ -17,7 +17,7 @@
 
   "reward_function": {
     "type": "negative_euclidean_distance",
-    "invalid_action_penalty": -50.0
+    "invalid_action_penalty": -10.0
   },
 
   "training": {

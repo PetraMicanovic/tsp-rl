@@ -86,6 +86,8 @@ def main():
             rewards = agent.train(episodes, num_points = num_points)
 
             all_results[num_points][algorithm_name] = rewards
+            print("Visited:", len(env.visited), "/", len(env.nodes)-1)
+            print("Path:", env.path)
 
             # Save reward curve
             if config["evaluation"]["save_reward_curves"]:
@@ -111,11 +113,13 @@ def main():
                     obs, reward, terminated, truncated, info = env.step(action)
                     state = agent.get_state()
                     route.append(env.current_node)
-                
-                if len(route) > 1:
+
+                print("ENV PATH:", env.path)
+
+                if len(env.path) > 1:
                     visualizer = TSPVisualizer(env.nodes)
-                    visualizer.plot_route(route, algorithm_name, num_points)
-                    visualizer.animate_route(route, algorithm_name, num_points)
+                    visualizer.plot_route(env.path, algorithm_name, num_points)
+                    visualizer.animate_route(env.path, algorithm_name, num_points)
 
         if config["evaluation"]["compare_algorithms"]:
             plotter.compare_algorithms(all_results[num_points],num_points)
