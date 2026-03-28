@@ -63,6 +63,8 @@ class TSPEnvironment:
         # each action corresponds to selecting one intermediate node
         self.action_space = spaces.Discrete(self.max_points)
 
+        self._generate_nodes(max(self.allowed_points))
+
         # Observation space:
         # [distances_to_nodes, visited_mask]
         self.observation_space = spaces.Box(
@@ -96,7 +98,7 @@ class TSPEnvironment:
         # 0 -> start
         # 1 .. num_points -> intermediate nodes
         # last-> goal
-        self.nodes = np.vstack([
+        self.full_nodes = np.vstack([
             self.start,
             points,
             self.goal
@@ -124,12 +126,17 @@ class TSPEnvironment:
                 f"num_points must be one of {self.allowed_points}"
             )
         
+        self.num_points = num_points
+        
         # Update action space according to the selected number of nodes
         self.action_space = spaces.Discrete(num_points)
-        self.num_points = num_points
+        points = self.full_nodes[1:-1][:num_points]
 
-        if self.nodes is None or (len(self.nodes)-2) != num_points:
-            self._generate_nodes(num_points)
+        self.nodes = np.vstack([
+            self.start,
+            points,
+            self.goal
+        ])
 
         # Initial episode state
         self.current_node = 0
@@ -209,8 +216,6 @@ class TSPEnvironment:
             self.current_node = goal_index
             self.path.append(goal_index)
 
-            # terminal penalty based on total tour distance
-            reward += 100
             
             terminated = True
 
