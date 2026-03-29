@@ -140,7 +140,6 @@ def main():
             if config["evaluation"]["save_final_paths"]:
                 env.reset(num_points)
                 state = agent.get_state()
-                route = [env.current_node]
 
                 terminated = False
                 truncated = False
@@ -156,8 +155,7 @@ def main():
 
                     obs, reward, terminated, truncated, info = env.step(action)
                     state = agent.get_state()
-                    route.append(env.current_node)
-
+                    
                 # Debug final route
                 print("Final route:", env.path)
 
