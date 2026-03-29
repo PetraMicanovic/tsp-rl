@@ -16,10 +16,34 @@ from utils.tsp_visualizer import TSPVisualizer
 import numpy as np
 
 def load_config(path = "config.json"):
+    """
+    Load configuration file.
+
+    Parameters
+    path: str
+        Path to JSON configuration file.
+    Returns
+    dict
+        Parsed configuration dictionary.
+    """
     with open(path, 'r') as f:
         return json.load(f)
     
 def create_agent(name, env, config):
+    """
+    Function for creating RL agents.
+
+    Parameters:
+    name: str
+        Name of the algorithm ("sarsa", "q_learning", etc.)
+    env: TSPEnvironment
+        Environment instance
+    config: dict
+        Configuration dictionary
+    Returns:
+    BaseAgent
+        Initialized agent instance
+    """
     alpha = config["training"]["learning_rate"]
     gamma = config["training"]["discount_factor"]
     epsilon = config["training"]["epsilon_start"]
@@ -43,6 +67,14 @@ def greedy_action(agent, state, valid_actions):
     Select the best action deterministically.
     This function is used only during the evaluation, after training.
     This avoidness randomness from epsilon-greedy policy.
+
+    Parameters
+    agent: BaseAgent
+    state: tuple
+    valid_actions: list[int]
+    Returns
+    best_action: int
+        Action with highest Q-value
     """
     best_action = valid_actions[0]
     best_value = agent.get_combined_q(state, best_action)
@@ -56,6 +88,17 @@ def greedy_action(agent, state, valid_actions):
     return best_action
 
 def main():
+    """
+    Main experiment pipeline.
+    
+    Workflow:
+    1. Load configuration
+    2. Initialize environment
+    3. Train agents for different number of points
+    4. Save reward plots
+    5. Evaluate final learned policy
+    6. Visualize routes
+    """
     config = load_config()
 
     env = TSPEnvironment("config.json")
@@ -86,14 +129,14 @@ def main():
             rewards = agent.train(episodes, num_points = num_points)
 
             all_results[num_points][algorithm_name] = rewards
+            # Debug info
             print("Visited:", len(env.visited), "/", len(env.nodes)-1)
-            print("Path:", env.path)
 
             # Save reward curve
             if config["evaluation"]["save_reward_curves"]:
                 plotter.plot_rewards(rewards, algorithm_name, num_points)
 
-            # Save final route
+            # Evaluate
             if config["evaluation"]["save_final_paths"]:
                 env.reset(num_points)
                 state = agent.get_state()
@@ -104,6 +147,7 @@ def main():
 
                 while not (terminated or truncated):
                     valid_actions = agent.get_valid_actions()
+                    # if no valid actions -> force termination
                     if not valid_actions:
                         terminated = True
                         continue 
@@ -114,8 +158,10 @@ def main():
                     state = agent.get_state()
                     route.append(env.current_node)
 
-                print("ENV PATH:", env.path)
+                # Debug final route
+                print("Final route:", env.path)
 
+                # Visualization
                 if len(env.path) > 1:
                     visualizer = TSPVisualizer(env.nodes)
                     visualizer.plot_route(env.path, algorithm_name, num_points)
@@ -123,7 +169,7 @@ def main():
 
         if config["evaluation"]["compare_algorithms"]:
             plotter.compare_algorithms(all_results[num_points],num_points)
-            plotter.compare_N_for_each_algorithm(all_results)
+    plotter.compare_N_for_each_algorithm(all_results)
     print("\n----------- Training complete -----------------")
 
 
