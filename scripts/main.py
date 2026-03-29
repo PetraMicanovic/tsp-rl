@@ -123,6 +123,7 @@ def main():
 
         if config["evaluation"]["compare_algorithms"]:
             plotter.compare_algorithms(all_results[num_points],num_points)
+            plotter.compare_N_for_each_algorithm(all_results)
     print("\n----------- Training complete -----------------")
 
 

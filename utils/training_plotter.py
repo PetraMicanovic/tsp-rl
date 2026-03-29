@@ -65,7 +65,7 @@ class TrainingPlotter:
             Number of cities used in the environment
         """
         # Create algorithm directory 
-        save_dir = os.path.join(self.reward_dir, algorithm_name)
+        save_dir = os.path.join(save_dir, algorithm_name)
         os.makedirs(save_dir, exist_ok = True)
 
         plt.figure()
@@ -111,3 +111,34 @@ class TrainingPlotter:
 
         plt.savefig(save_path)
         plt.close()
+
+    def compare_N_for_each_algorithm(self, all_results):
+        """
+        Plot comparison of algorithm for multiple points(5, 10, 15, 20) on a single graph.
+
+        Parameters
+        results: dict
+            Dictionary mapping algorithm name to reward list.
+        """
+
+        first_key = list(all_results.keys())[0]
+        algorithms = all_results[first_key].keys()
+
+        for algorithm in algorithms:
+            plt.figure()
+
+            for num_points, results in all_results.items():
+                rewards = results[algorithm]
+                smoothed = self.moving_average(rewards)
+
+                plt.plot(smoothed, label=f"N = {num_points}")
+
+            plt.xlabel("Episode")
+            plt.ylabel("Moving Average Reward")
+            plt.title(f"{algorithm} - comparison across N")
+            plt.legend()
+            filename = f"{algorithm}_all_N.png"
+            save_path = os.path.join(self.comparison_dir, filename)
+
+            plt.savefig(save_path)
+            plt.close()
