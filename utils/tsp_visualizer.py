@@ -38,7 +38,7 @@ class TSPVisualizer:
 
         fig, ax = plt.subplots()
 
-        ax.plot(x,y, color = "blue", linewidth = 2, marker = "o")
+        ax.plot(x,y, color = "blue", linewidth = 1, marker = "o")
 
          # Draw arrows 
         for i in range(len(route) - 1):
@@ -54,7 +54,7 @@ class TSPVisualizer:
                 head_width=1.5,
                 length_includes_head=True,
                 color="red",
-                alpha=0.8
+                alpha=1
             )
 
         for i, (px, py) in enumerate(self.points):

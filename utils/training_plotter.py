@@ -9,7 +9,7 @@ class TrainingPlotter:
         - plotting moving average reward
         - comparing multiple algorithms on a single graph
     """
-    def __init__(self, reward_dir = "results/reward_curves", comparison_dir = "results/comparisons", window = 5000):
+    def __init__(self, reward_dir = "results/reward_curves", comparison_dir = "results/comparisons", window = 1000):
         """
         Initialize the plotter.
 
@@ -95,8 +95,10 @@ class TrainingPlotter:
         plt.ylabel("Reward")
         plt.title(f"{algorithm_name} ({num_points} points)")
         all_smoothed = np.array(all_smoothed)
-        plt.ylim(np.percentile(all_smoothed, 5), np.percentile(all_smoothed,95))
-
+        y_min = np.min(all_smoothed)
+        y_max = np.max(all_smoothed)
+        margin = 0.05 * (y_max - y_min)
+        plt.ylim(y_min - margin, y_max + margin)        
         filename = f"{algorithm_name}_{num_points}.png"
         save_path = os.path.join(save_dir, filename)
 
@@ -129,8 +131,10 @@ class TrainingPlotter:
         plt.title(f"Algorithm Comparison ({num_points} points)")
         plt.legend()
         all_smoothed = np.array(all_smoothed)
-        plt.ylim(np.percentile(all_smoothed, 5), np.percentile(all_smoothed,95))
-        
+        y_min = np.min(all_smoothed)
+        y_max = np.max(all_smoothed)
+        margin = 0.05 * (y_max - y_min)
+        plt.ylim(y_min - margin, y_max + margin)
         filename = f"comparison_{num_points}.png"
         save_path = os.path.join(self.comparison_dir, filename)
 
@@ -166,8 +170,10 @@ class TrainingPlotter:
             plt.title(f"{algorithm} - comparison across N")
             plt.legend()
             all_smoothed = np.array(all_smoothed)
-            plt.ylim(np.percentile(all_smoothed, 5), np.percentile(all_smoothed,95))
-
+            y_min = np.min(all_smoothed)
+            y_max = np.max(all_smoothed)
+            margin = 0.05 * (y_max - y_min)
+            plt.ylim(y_min - margin, y_max + margin)
             filename = f"{algorithm}_all_N.png"
             save_path = os.path.join(self.comparison_dir, filename)
 
