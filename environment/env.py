@@ -213,6 +213,7 @@ class TSPEnvironment:
             distance = self._euclidean_distance(self.current_node, goal_index)
             
             self.total_distance += distance
+            reward += -distance
             self.current_node = goal_index
             self.path.append(goal_index)
 
