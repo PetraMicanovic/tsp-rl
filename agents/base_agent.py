@@ -1,5 +1,6 @@
 import random
 from abc import ABC, abstractmethod
+import numpy as np
 
 class BaseAgent(ABC):
     """
@@ -46,22 +47,25 @@ class BaseAgent(ABC):
         Construct the current state representation.
 
         The state consist of:
-            - current node where the agent is located
+            - Euclidean distances to all intermediate nodes
             - bitmask representing visited nodes
 
         Each bit in the mask indicates whether a node has been visited.
+        Since distances are continuous values, we apply rounding to discretize the state space and make tabular RL feasible.
 
         Returns
         state: tuple
-            (current_node, visited_mask)
+            (distances, visited_mask)
         """
-        visited_mask = 0
+        observation = self.env._get_observation()
+        observation = np.array(observation)
 
-        for node in self.env.visited:
-            if 1 <= node <= self.env.num_points:
-                visited_mask |=1 << node
+        half = len(observation) // 2
+        distances = observation[:half]
+        visited_mask = observation[half:]
+        distances = np.round(distances, 1)
 
-        return (self.env.current_node, visited_mask)
+        return (tuple(distances.tolist()), tuple(visited_mask.tolist()))
     
     def update_q(self, state, action, value):
         """
@@ -115,14 +119,12 @@ class BaseAgent(ABC):
         valid_actions: list[int]
             List of action indices corresponding to unvisited nodes.
         """
-        _, visited_mask = self.get_state()
-
         valid_actions = []
 
         for action in range(self.env.num_points):
             node_index = action + 1
 
-            if not (visited_mask & (1 << node_index)):
+            if node_index not in self.env.visited:
                 valid_actions.append(action)
 
         return valid_actions
@@ -160,7 +162,7 @@ class BaseAgent(ABC):
             List of actions that are allowed.
 
         Returns
-        int or None
+        action: int
             Selected action index or None if no valid actions exist
         """
         if not valid_actions:
@@ -171,17 +173,19 @@ class BaseAgent(ABC):
             return random.choice(valid_actions)
         
         # choose the action with the highest Q-value
-        best_action = valid_actions[0]
-        best_value = self.get_q_value(state,best_action)
+        best_actions = []
+        best_value = float("-inf")
 
-        for action in valid_actions[1:]:
+        for action in valid_actions:
             value = self.get_q_value(state, action)
 
             if value > best_value:
                 best_value = value
-                best_action = action
+                best_actions = [action]
+            elif value == best_value:
+                best_actions.append(action)
         
-        return best_action
+        return random.choice(best_actions)
     
     @abstractmethod
     def train(self, episodes, num_points = 5):
