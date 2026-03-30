@@ -81,19 +81,21 @@ class TrainingPlotter:
         save_dir = os.path.join(self.reward_dir, algorithm_name)
         os.makedirs(save_dir, exist_ok = True)
 
-        plt.style.use("seaborn-v0_8-whitegrid")        
-        plt.figure(figsize = (10,6))
-        
+        plt.style.use("seaborn-v0_8-white")     
+        all_smoothed = []
+   
         #Smoothed curve
         smoothed = self.moving_average(rewards)
-        smoothed = self.downsample(smoothed, factor = 50)
+        if len(smoothed) > 50:
+            smoothed = self.downsample(smoothed, factor = 50)
         plt.plot(smoothed, linewidth = 2)
+        all_smoothed.extend(smoothed)
         
         plt.xlabel("Episode (scaled)")
         plt.ylabel("Reward")
         plt.title(f"{algorithm_name} ({num_points} points)")
-        plt.ylim(np.percentile(smoothed, 5), np.percentile(smoothed,95))
-        plt.grid(True, alpha = 0.3)
+        all_smoothed = np.array(all_smoothed)
+        plt.ylim(np.percentile(all_smoothed, 5), np.percentile(all_smoothed,95))
 
         filename = f"{algorithm_name}_{num_points}.png"
         save_path = os.path.join(save_dir, filename)
@@ -111,19 +113,23 @@ class TrainingPlotter:
         num_points: int
             Number of points in the TSP problem
         """
-        plt.style.use("seaborn-v0_8-whitegrid")        
-        plt.figure(figsize = (10, 6))
+        plt.figure()
+        plt.style.use("seaborn-v0_8-white")   
+        all_smoothed = []
 
         for algorithm_name, rewards in results.items():
             smoothed = self.moving_average(rewards)
-            smoothed = self.downsample(smoothed, factor = 50)
+            if len(smoothed) > 50:
+                smoothed = self.downsample(smoothed, factor = 50)
             plt.plot(smoothed, label = algorithm_name, linewidth = 2)
+            all_smoothed.extend(smoothed)
+
         plt.xlabel("Episode (scaled)")
         plt.ylabel("Moving Average Reward")
         plt.title(f"Algorithm Comparison ({num_points} points)")
         plt.legend()
-        plt.grid(True, alpha = 0.3)
-        plt.ylim(np.percentile(smoothed, 5), np.percentile(smoothed,95))
+        all_smoothed = np.array(all_smoothed)
+        plt.ylim(np.percentile(all_smoothed, 5), np.percentile(all_smoothed,95))
         
         filename = f"comparison_{num_points}.png"
         save_path = os.path.join(self.comparison_dir, filename)
@@ -139,25 +145,28 @@ class TrainingPlotter:
         results: dict
             Dictionary mapping algorithm name to reward list.
         """
-        plt.style.use("seaborn-v0_8-whitegrid")
+        plt.style.use("seaborn-v0_8-white")
         first_key = list(all_results.keys())[0]
         algorithms = all_results[first_key].keys()
 
         for algorithm in algorithms:
-            plt.figure(figsize = (10,6))
+            plt.figure()
+            all_smoothed = []
 
             for num_points, results in all_results.items():
                 rewards = results[algorithm]
                 smoothed = self.moving_average(rewards)
-                smoothed = self.downsample(smoothed, factor = 50)
+                if len(smoothed) > 50:
+                    smoothed = self.downsample(smoothed, factor = 50)
                 plt.plot(smoothed, label=f"N = {num_points}", linewidth = 2)
+                all_smoothed.extend(smoothed)
 
             plt.xlabel("Episode (scaled)")
             plt.ylabel("Moving Average Reward")
             plt.title(f"{algorithm} - comparison across N")
             plt.legend()
-            plt.grid(True, alpha = 0.3)
-            plt.ylim(np.percentile(smoothed, 5), np.percentile(smoothed,95))
+            all_smoothed = np.array(all_smoothed)
+            plt.ylim(np.percentile(all_smoothed, 5), np.percentile(all_smoothed,95))
 
             filename = f"{algorithm}_all_N.png"
             save_path = os.path.join(self.comparison_dir, filename)

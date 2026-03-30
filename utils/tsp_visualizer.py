@@ -36,9 +36,26 @@ class TSPVisualizer:
         x = [self.points[i][0] for i in route]
         y = [self.points[i][1] for i in route]
 
-        plt.figure()
+        fig, ax = plt.subplots()
 
-        plt.plot(x, y, marker = "o")
+        ax.plot(x,y, color = "blue", linewidth = 2, marker = "o")
+
+         # Draw arrows 
+        for i in range(len(route) - 1):
+            start = self.points[route[i]]
+            end = self.points[route[i + 1]]
+
+            dx = end[0] - start[0]
+            dy = end[1] - start[1]
+
+            ax.arrow(
+                start[0], start[1],
+                dx, dy,
+                head_width=1.5,
+                length_includes_head=True,
+                color="red",
+                alpha=0.8
+            )
 
         for i, (px, py) in enumerate(self.points):
             plt.text(px, py, str(i))
