@@ -101,8 +101,6 @@ def main():
     """
     config = load_config()
 
-    env = TSPEnvironment("config.json")
-
     plotter = TrainingPlotter()
 
     num_points_list = config["environment"]["num_intermediate_points"]
@@ -125,6 +123,9 @@ def main():
                 continue
             print(f"Training: {algorithm_name}")
 
+            env = TSPEnvironment("config.json")
+            env.reset()
+            
             agent = create_agent(algorithm_name, env, config)
             rewards = agent.train(episodes, num_points = num_points)
 
@@ -155,7 +156,7 @@ def main():
 
                     obs, reward, terminated, truncated, info = env.step(action)
                     state = agent.get_state()
-                    
+
                 # Debug final route
                 print("Final route:", env.path)
 
