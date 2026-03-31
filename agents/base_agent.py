@@ -63,8 +63,8 @@ class BaseAgent(ABC):
         half = len(observation) // 2
         distances = observation[:half]
         visited_mask = observation[half:]
-        distances = np.round(distances, 1)
-
+        np.round(distances / 5) * 5
+        
         return (tuple(distances.tolist()), tuple(visited_mask.tolist()))
     
     def update_q(self, state, action, value):
