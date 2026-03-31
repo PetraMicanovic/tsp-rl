@@ -127,13 +127,17 @@ class DoubleQLearningAgent(BaseAgent):
         if random.random() < self.epsilon:
             return random.choice(valid_actions)
         
-        # choose action with the highest (Q1 + Q2)
+        # Randomly choose which Q-table to use for action selection
+        if random.random() < 0.5:
+            q_func = self.get_q_value
+        else:
+            q_func = self.get_q2_value
+        
         best_action = valid_actions[0]
-        best_value = self.get_q_value(state, best_action) + self.get_q2_value(state,best_action)
+        best_value = q_func(state, best_action)
 
         for action in valid_actions[1:]:
-            value = self.get_q_value(state, action) + self.get_q2_value(state, action)
-
+            value = q_func(state, action)
             if value > best_value:
                 best_value = value
                 best_action = action
@@ -177,21 +181,25 @@ class DoubleQLearningAgent(BaseAgent):
                     # Randomly decide which Q-table to update
                     if random.random() < 0.5:
                         # update Q1
-                        best_next = self.best_action_from_q(next_state, next_valid_actions, self.get_q_value)
-                        
-                        current_q = self.get_q_value(state, action)
-                        next_q = self.get_q2_value(next_state, best_next)
+                        if next_valid_actions:
+                            best_next = self.best_action_from_q(next_state, next_valid_actions, self.get_q_value)
+                            next_q = self.get_q2_value(next_state, best_next)
+                        else:
+                            next_q = 0
 
+                        current_q = self.get_q_value(state, action)
                         # Double Q-learning update rule
                         new_q = current_q + self.alpha * (reward + self.gamma * next_q - current_q)
                         self.update_q(state, action, new_q)
                     else:
-                        # update Q2
-                        best_next = self.best_action_from_q(next_state, next_valid_actions, self.get_q2_value)
+                        if next_valid_actions:
+                            # update Q2
+                            best_next = self.best_action_from_q(next_state, next_valid_actions, self.get_q2_value)
+                            next_q = self.get_q_value(next_state, best_next)
+                        else:
+                            next_q = 0
 
                         current_q = self.get_q2_value(state, action)
-                        next_q = self.get_q_value(next_state, best_next)
-
                         new_q = current_q + self.alpha * (reward + self.gamma * next_q - current_q)
                         self.update_q2(state, action, new_q)
                     state = next_state
@@ -206,7 +214,6 @@ class DoubleQLearningAgent(BaseAgent):
                         current_q = self.get_q2_value(state, action)
                         new_q = current_q + self.alpha * (reward  - current_q)
                         self.update_q2(state, action, new_q)
-                    
                     break
 
             rewards_per_episode.append(total_reward)
