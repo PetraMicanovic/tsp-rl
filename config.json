@@ -21,13 +21,13 @@
   },
 
   "training": {
-    "episodes": 30000,
+    "episodes": 50000,
     "learning_rate": 0.1,
     "discount_factor": 0.99,
 
     "epsilon_start": 1.0,
     "epsilon_min": 0.05,
-    "epsilon_decay": 0.999
+    "epsilon_decay": 0.997
   },
 
   "algorithms": {
@@ -36,7 +36,7 @@
     "double_q_learning": true,
     "n_step_sarsa": {
       "enabled": true,
-      "n": 10
+      "n": 15
     }
   },
 
