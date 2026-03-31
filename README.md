@@ -15,10 +15,12 @@ temporal-difference control algorithms.
 - Start position: (0, 0)  
 - Goal position: (100, 100)  
 - Intermediate points: N = {5, 10, 15, 20}  
-- Points are sampled uniformly with integer coordinates from: X ∈ [10, 90], Y ∈ [10, 90]
+- Points are uniformly sampled with integer coordinates from: X ∈ [10, 90], Y ∈ [10, 90]
 
 
-The robot must visit points sequentially and reach the goal with minimal total path length. Observations consist of Euclidean distances to remaining points. Actions correspond to selecting the next point to visit. The environment follows the Gymnasium-style interface (`reset`, `step`) and simulates an MDP. A fixed random seed is used for all experiments to ensure reproducibility.
+The robot must visit points sequentially and reach the goal with minimal total path length. Observations consist of Euclidean distances to remaining points. Actions correspond to selecting the next point to visit. The environment follows the Gymnasium-style interface (`reset`, `step`) and simulates an MDP. A fixed random seed is used for all experiments to ensure reproducibility. 
+
+To reduce the size of the state space, distances are discretized by rounding to the nearest multiple of 5.
 
 ---
 
@@ -38,10 +40,23 @@ All methods use discrete state-action tables (no neural networks).
 ## Reward Function
 
 The reward is defined as the negative Euclidean distance for each move.
-Invalid actions (revisiting already visited nodes) receive a penalty of -50.
+Invalid actions (revisiting already visited nodes) receive a penalty of -10.
 The episode terminates when the goal is reached.
 
-This formulation directly minimizes the total traveled distance.
+This formulation directly minimizes the total traveled distance. The cumulative reward corresponds to the negative total path length.
+
+---
+
+## Hyperparameters
+
+Key hyperparameters include:
+- learning_rate (α)
+- discount_factor (γ)
+- epsilon (ε-greedy exploration)
+- epsilon_decay
+- n (for n-step SARSA)
+
+Their impact on performance is analyzed experimentally.
 
 ---
 
@@ -63,9 +78,15 @@ python main.py
 ```
 ---
 
-## Results
+## Results and Visualization
 
-Results (learning curves, paths, metrics) will be saved in: results/
+The project generates and stores the following outputs:
+- Reward curves (per episode and smoothed)
+- Comparison plots across algorithms and problem sizes
+- Final routes for each algorithm
+- Animated visualizations of robot trajectories
+
+All results are saved in the 'results/' directory.
 
 ---
 
