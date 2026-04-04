@@ -14,6 +14,8 @@ from utils.training_plotter import TrainingPlotter
 from utils.tsp_visualizer import TSPVisualizer
 
 import numpy as np
+import random
+
 
 def load_config(path = "config.json"):
     """
@@ -99,7 +101,10 @@ def main():
     5. Evaluate final learned policy
     6. Visualize routes
     """
+  
     config = load_config()
+    random.seed(config["environment"]["random_seed"])
+    np.random.seed(config["environment"]["random_seed"])
 
     plotter = TrainingPlotter()
 
