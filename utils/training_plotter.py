@@ -180,7 +180,7 @@ class TrainingPlotter:
             plt.savefig(save_path, dpi = 150)
             plt.close()
 
-    def compare_hyperparameters(self,results, algorithm_name,num_points):
+    def compare_hyperparameters(self, results, title_suffix):
         """
         Plot comparison of diffrent hyperparameters for a single algorithm.
 
@@ -204,7 +204,7 @@ class TrainingPlotter:
 
         plt.xlabel("Episode (scaled)")
         plt.ylabel("Reward")
-        plt.title(f"{algorithm_name} - hyperparameter ({num_points} points")
+        plt.title(f"{title_suffix}")
         plt.legend()
 
         all_smoothed = np.array(all_smoothed)
@@ -213,7 +213,7 @@ class TrainingPlotter:
         margin = 0.05 * (y_max - y_min)
         plt.ylim(y_min - margin, y_max + margin)
 
-        filename = f"{algorithm_name}_hyperparams_{num_points}.png"
+        filename = f"{title_suffix}.png"
         save_path = os.path.join(self.comparison_dir, filename)
 
         plt.savefig(save_path, dpi = 150)

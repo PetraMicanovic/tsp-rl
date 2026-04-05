@@ -1,6 +1,9 @@
 import os
 import sys
 import json
+import numpy as np
+import random
+import copy
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -12,10 +15,6 @@ from agents.n_step_sarsa import NStepSARSAAgent
 
 from utils.training_plotter import TrainingPlotter
 from utils.tsp_visualizer import TSPVisualizer
-
-import numpy as np
-import random
-
 
 def load_config(path = "config.json"):
     """
@@ -68,7 +67,7 @@ def greedy_action(agent, state, valid_actions):
     """
     Select the best action deterministically.
     This function is used only during the evaluation, after training.
-    This avoidness randomness from epsilon-greedy policy.
+    This avoids randomness from epsilon-greedy policy.
 
     Parameters
     agent: BaseAgent
@@ -89,6 +88,51 @@ def greedy_action(agent, state, valid_actions):
         
     return best_action
 
+def run_experiment(agent_name, param_name, values, config, episodes, num_points):
+    """
+    Runs a hyperparameter experiment for a given algorithm.
+
+    Parameters:
+    agent_name: str
+        Algorithm name
+    param_name: str
+        Name of the hyperparameter to vary
+    values: list
+        List of values for the hyperparameter
+    config: dict
+        Base configuration 
+    episodes: int
+        Number of training episodes
+    num_points: int
+        Number of TSP nodes
+
+    Returns:
+    results: dict
+        Dictionary mapping parameter values to reward curves
+    """
+    results = {}
+
+    for v in values:
+        print(f"{agent_name} with {param_name} = {v}")
+
+        local_config = copy.deepcopy(config)
+        env = TSPEnvironment("config.json")
+        env.reset(num_points)
+
+        if param_name == "epsilon_decay":
+            local_config["training"]["epsilon_decay"] = v
+        elif param_name == "learning_rate":
+            local_config["training"]["learning_rate"] = v
+        elif param_name == "n":
+            local_config["algorithms"]["n_step_sarsa"]["n"] = v
+
+        agent = create_agent(agent_name, env, local_config)
+        rewards = agent.train(episodes, num_points=num_points)
+
+        results[f"{param_name}={v}"] = rewards
+
+    return results
+
 def main():
     """
     Main experiment pipeline.
@@ -100,8 +144,9 @@ def main():
     4. Save reward plots
     5. Evaluate final learned policy
     6. Visualize routes
+    7. Plot comparison of diffrent hyperparameters for a Double Q-learning and n-step SARSA algorithm.
+
     """
-  
     config = load_config()
     random.seed(config["environment"]["random_seed"])
     np.random.seed(config["environment"]["random_seed"])
@@ -129,7 +174,7 @@ def main():
             print(f"Training: {algorithm_name}")
 
             env = TSPEnvironment("config.json")
-            env.reset()
+            env.reset(num_points)
             
             agent = create_agent(algorithm_name, env, config)
             rewards = agent.train(episodes, num_points = num_points)
@@ -174,6 +219,35 @@ def main():
         if config["evaluation"]["compare_algorithms"]:
             plotter.compare_algorithms(all_results[num_points],num_points)
     plotter.compare_N_for_each_algorithm(all_results)
+
+    # Hyperparameter analysis (N = 20)
+    print("\n Running hyperparameter analysis (N = 20)")
+
+    # Double Q-learning
+    ## Epsilon decay
+    decay_values = [0.9999, 0.9997, 0.9995]
+    dq_ed_results = run_experiment("double_q_learning", "epsilon_decay", decay_values, config, episodes, 20)
+    plotter.compare_algorithms(dq_ed_results, "DoubleQ_epsilon_decay_20")
+
+    ## Learning rate
+    learning_rate_values = [0.2, 0.1, 0.05]
+    dq_lr_results = run_experiment("double_q_learning", "learning_rate", learning_rate_values, config, episodes, 20)
+    plotter.compare_algorithms(dq_lr_results, "DoubleQ_learning_rate_20")
+
+    # n-step SARSA
+    ## Epsilon decay
+    nSARSA_ed_results = run_experiment("n_step_sarsa", "epsilon_decay", decay_values, config, episodes, 20)
+    plotter.compare_algorithms(nSARSA_ed_results, "n_step_SARSA_epsilon_decay_20")
+
+    ## Learning rate
+    nSARSA_lr_results = run_experiment("n_step_sarsa", "learning_rate", learning_rate_values, config, episodes, 20)
+    plotter.compare_algorithms(nSARSA_lr_results, "n_step_SARSA_learning_rate_20")
+
+    ## N
+    n_values = [10, 15, 20]
+    nSARSA_n_results = run_experiment("n_step_sarsa", "n", n_values, config, episodes, 20)
+    plotter.compare_algorithms(nSARSA_n_results, "n_step_SARSA_n_20")
+
     print("\n----------- Training complete -----------------")
 
 
