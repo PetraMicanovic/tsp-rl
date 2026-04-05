@@ -27,7 +27,7 @@
 
     "epsilon_start": 1.0,
     "epsilon_min": 0.05,
-    "epsilon_decay": 0.997
+    "epsilon_decay": 0.9997
   },
 
   "algorithms": {
