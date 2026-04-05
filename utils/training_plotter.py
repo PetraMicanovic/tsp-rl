@@ -179,3 +179,42 @@ class TrainingPlotter:
 
             plt.savefig(save_path, dpi = 150)
             plt.close()
+
+    def compare_hyperparameters(self,results, algorithm_name,num_points):
+        """
+        Plot comparison of diffrent hyperparameters for a single algorithm.
+
+        Parameters:
+        results: dict
+            key = hyperparameter label
+            value = reward list
+        """
+        plt.style.use("seaborn-v0_8-white")
+
+        all_smoothed = []
+
+        for label, rewards in results.items():
+            smoothed = self.moving_average(rewards)
+
+            if len(smoothed) > 50:
+                smoothed = self.downsample(smoothed, factor=50)
+
+            plt.plot(smoothed, label = label)
+            all_smoothed.extend(smoothed)
+
+        plt.xlabel("Episode (scaled)")
+        plt.ylabel("Reward")
+        plt.title(f"{algorithm_name} - hyperparameter ({num_points} points")
+        plt.legend()
+
+        all_smoothed = np.array(all_smoothed)
+        y_min = np.min(all_smoothed)
+        y_max = np.max(all_smoothed)
+        margin = 0.05 * (y_max - y_min)
+        plt.ylim(y_min - margin, y_max + margin)
+
+        filename = f"{algorithm_name}_hyperparams_{num_points}.png"
+        save_path = os.path.join(self.comparison_dir, filename)
+
+        plt.savefig(save_path, dpi = 150)
+        plt.close()
