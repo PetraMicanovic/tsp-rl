@@ -133,7 +133,7 @@ def nearest_neighbor(env, num_points):
         valid_actions = []
         for i in range(len(env.nodes) - 1):
             if i not in env.visited:
-                valid_actions = [i - 1] # convert node index -> action index
+                valid_actions.append(i - 1) # convert node index -> action index
 
         if not valid_actions:
             break
