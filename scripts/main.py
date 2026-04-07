@@ -69,24 +69,208 @@ def greedy_action(agent, state, valid_actions):
     This function is used only during the evaluation, after training.
     This avoids randomness from epsilon-greedy policy.
 
-    Parameters
-    agent: BaseAgent
-    state: tuple
-    valid_actions: list[int]
-    Returns
-    best_action: int
-        Action with highest Q-value
-    """
-    best_action = valid_actions[0]
-    best_value = agent.get_combined_q(state, best_action)
+    Parameters:
+    agent : BaseAgent
+        Trained RL agent
+    state : tuple
+        Current state
+    valid_actions : list[int]
+        List of valid actions
 
-    for a in valid_actions[1:]:
+    Returns:
+    action : int or None
+        Selected action
+    """
+    if not valid_actions:
+        return None
+    
+    best_actions = []
+    best_value = float("-inf")
+
+    for a in valid_actions:
         v = agent.get_combined_q(state, a)
+        if v is None or np.isnan(v):
+            continue
         if v > best_value:
             best_value = v
-            best_action = a
+            best_actions = [a]
+        elif v == best_value:
+            best_actions.append(a)
+
+    if not best_actions:
+        return random.choice(valid_actions)
         
-    return best_action
+    return random.choice(best_actions)
+
+def nearest_neighbor(env, num_points):
+    """
+    Greedy heuristic baseline (Nearest Neighbor).
+
+    At each step, selects the closest unvisited node.
+    Used for comparison with RL performance.
+
+    Parameters:
+    env : TSPEnvironment
+        Environment instance
+    num_points : int
+        Number of intermediate nodes
+
+    Returns:
+    total_distance : float
+        Total tour length
+    path : list[int]
+        Sequence of visited node indices
+    """
+    env.reset(num_points)
+
+    terminated = False
+    truncated = False
+
+    while not (terminated or truncated):
+        current = env.current_node
+
+        # Build list of valid actions (unvisited nodes)
+        valid_actions = []
+        for i in range(len(env.nodes) - 1):
+            if i not in env.visited:
+                valid_actions = [i - 1] # convert node index -> action index
+
+        if not valid_actions:
+            break
+
+        best_action = None
+        best_distance = float("inf")
+
+        # Select nearest unvisited node
+        for a in valid_actions:
+            node_index = a + 1  # action -> node
+            dist = env._euclidean_distance(current, node_index)
+
+            if dist < best_distance:
+                best_distance = dist
+                best_action = a
+
+        _, _, terminated, truncated, _ = env.step(best_action)
+
+    return env.total_distance, env.path
+
+def random_policy(env, num_points):
+    """
+    Random baseline policy.
+
+    Selects actions uniformly at random from the set of valid actions.
+    This serves as a lower-bound baseline for comparison.
+
+    Parameters:
+    env : TSPEnvironment
+        Environment instance
+    num_points : int
+        Number of intermediate nodes
+
+    Returns:
+    total_distance : float
+        Total tour length
+    """
+    env.reset(num_points)
+
+    terminated = False
+    truncated = False
+
+    while not (terminated or truncated):
+        # Build list of valid actions (unvisited nodes)
+        valid_actions = []
+        for i in range(1, len(env.nodes)-1):
+            if i not in env.visited:
+                valid_actions.append(i-1)
+
+        if not valid_actions:
+            break
+
+        action = random.choice(valid_actions)
+        _, _, terminated, truncated, _ = env.step(action)
+
+    return env.total_distance
+
+def evaluate_policy(env_class, agent, num_points, runs=5):
+    """
+    Evaluate trained RL agent against baseline heuristics.
+
+    The function runs multiple independent episodes and compares:
+    - RL agent (greedy policy, no exploration)
+    - Nearest Neighbor heuristic
+    - Random policy
+
+    Parameters:
+    env_class : class
+        Environment class (TSPEnvironment)
+    agent : BaseAgent
+        Trained RL agent
+    num_points : int
+        Number of intermediate nodes
+    runs : int
+        Number of evaluation runs
+
+    Returns:
+    rl_mean : float
+        Mean distance achieved by RL agent
+    rl_std : float
+        Standard deviation of RL performance
+    nn_mean : float
+        Mean distance of nearest neighbor heuristic
+    rand_mean : float
+        Mean distance of random policy
+    """
+    rl_distances = []
+    nn_distances = []
+    rand_distances = []
+    original_env = agent.env
+
+    for _ in range(runs):
+        # RL
+        env = env_class("config.json")
+        env.reset(num_points)
+
+        agent.env = env
+        state = agent.get_state()
+        terminated = False
+        truncated = False
+
+        steps = 0
+        # Limit steps to avoid infinite loops
+        max_steps = num_points + 5
+
+        while not (terminated or truncated) and steps < max_steps:
+            valid_actions = agent.get_valid_actions()
+            steps += 1
+            if not valid_actions:
+                break
+
+            action = greedy_action(agent, state, valid_actions)
+            _, _, terminated, truncated, _ = env.step(action)
+            state = agent.get_state()
+
+        rl_distances.append(env.total_distance)
+
+        # NN
+        # Evaluate Nearest Neighbor baseline
+        nn_env = env_class("config.json")
+        nn_d, _ = nearest_neighbor(nn_env, num_points)
+        nn_distances.append(nn_d)
+
+        # RANDOM
+        # Evaluate Random baseline
+        rand_env = env_class("config.json")
+        rand_d = random_policy(rand_env, num_points)
+        rand_distances.append(rand_d)
+
+        agent.env = original_env
+
+    return (
+        np.mean(rl_distances),
+        np.std(rl_distances),
+        np.mean(nn_distances),
+        np.mean(rand_distances),
+    )
 
 def run_experiment(agent_name, param_name, values, config, episodes, num_points):
     """
@@ -181,7 +365,7 @@ def main():
 
             all_results[num_points][algorithm_name] = rewards
             # Debug info
-            print("Visited:", len(env.visited), "/", len(env.nodes)-1)
+            print("Visited:", len(env.visited), "/", len(env.nodes))
 
             # Save reward curve
             if config["evaluation"]["save_reward_curves"]:
@@ -209,7 +393,16 @@ def main():
 
                 # Debug final route
                 print("Final route:", env.path)
+                print("Total distance:", env.total_distance)
 
+                rl_mean, rl_std, nn_mean, rand_mean = evaluate_policy(TSPEnvironment, agent, num_points, runs=5)
+
+                print(f"RL average distance: {rl_mean:.2f} ± {rl_std:.2f}")
+                print(f"NN average distance: {nn_mean:.2f}")
+                print(f"Random average distance: {rand_mean:.2f}")
+
+                improvement = (nn_mean - rl_mean) / (nn_mean + 1e-8) * 100
+                print(f"Improvement over NN: {improvement:.2f}%")
                 # Visualization
                 if len(env.path) > 1:
                     visualizer = TSPVisualizer(env.nodes)
@@ -249,7 +442,6 @@ def main():
     plotter.compare_algorithms(nSARSA_n_results, "n_step_SARSA_n_20")
 
     print("\n----------- Training complete -----------------")
-
 
 if  __name__ == "__main__":
     main()
