@@ -99,6 +99,9 @@ class NStepSARSAAgent(BaseAgent):
                     state_tau = states[tau]
                     action_tau = actions[tau]
 
+                    # Clip return to avoid large updates and improve numerical stability
+                    G = max(-1000, min(1000,G))
+
                     current_q = self.get_q_value(state_tau, action_tau)
                     new_q = current_q + self.alpha * (G - current_q)
                     self.update_q(state_tau, action_tau, new_q)
