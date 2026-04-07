@@ -63,8 +63,6 @@ class TSPEnvironment:
         # each action corresponds to selecting one intermediate node
         self.action_space = spaces.Discrete(self.max_points)
 
-        self._generate_nodes(max(self.allowed_points))
-
         # Observation space:
         # [distances_to_nodes, visited_mask]
         self.observation_space = spaces.Box(
@@ -73,14 +71,17 @@ class TSPEnvironment:
             shape=(2*self.max_points,),
             dtype=np.float32
         )
+
+        self._generate_nodes()
     
-    def _generate_nodes(self, num_points):
+    def _generate_nodes(self):
         """
         Generate a fixed TSP instance(start + intermediate nodes + goal).
 
         This function is called only once so that the same map is used across all training episodes.
         """
         points = set()
+        num_points = self.max_points
 
         # Generate random intermediate points
         while len(points) < num_points:
@@ -145,7 +146,7 @@ class TSPEnvironment:
         self.episode_reward = 0.0
 
         self.steps = 0
-        self.max_steps = 2 * len(self.nodes) 
+        self.max_steps = len(self.nodes) + self.num_points
 
         # Path tracking
         self.path = [0]
@@ -194,17 +195,34 @@ class TSPEnvironment:
         # Check if node was already visited
         if action in self.visited:
             reward = self.invalid_action_penalty
-            observation = self._get_observation()
-            return observation, reward, terminated, truncated, {}
+            if self.steps >= self.max_steps:
+                return self._get_observation(), reward, False, True, {}
 
+            return self._get_observation(), reward, False, False, {}
+
+        # distance reward
         distance = self._euclidean_distance(self.current_node, action)
         reward = -distance
+
+        # Small step penalty to encourage shorter tours
+        reward -= 0.1
 
         # Update environment state
         self.total_distance += distance
         self.current_node = action
         self.visited.add(action)
         self.path.append(action)
+
+        # reward shaping
+        unvisited = [i for i in range(1, len(self.nodes)-1) if i not in self.visited]
+
+        if unvisited:
+            nearest = min(unvisited, key=lambda i: self._euclidean_distance(action, i))
+            # Encourage moving toward nearest unvisited node
+            reward += -0.05 * self._euclidean_distance(action, nearest)
+
+        if self.current_node is None or self.current_node >= len(self.nodes):
+            raise ValueError(f"Invalid current_node: {self.current_node}")
 
         # Termination condition
         # Check if all intermediate nodes have been visited
@@ -214,10 +232,13 @@ class TSPEnvironment:
             
             self.total_distance += distance
             reward += -distance
+
+            # Large bonus for completing the tour
+            reward += 500
+
             self.current_node = goal_index
             self.path.append(goal_index)
 
-            
             terminated = True
 
         # Truncation condition
@@ -230,7 +251,7 @@ class TSPEnvironment:
                 reward += -self.total_distance
         
         observation = self._get_observation()
-        self.episode_reward +=reward
+        self.episode_reward += reward
 
         info = {
             "total_distance": self.total_distance,
@@ -248,9 +269,11 @@ class TSPEnvironment:
         distances: Euclidean distances from current node to each intermediate node.
         visited_mask: binary indicator(1 if visited, 0 otherwise)
         """
-        distances = np.zeros(self.max_points, dtype=np.float32)
-        visited_mask = np.ones(self.max_points, dtype=np.float32)
+        if self.current_node >= len(self.nodes):
+            raise ValueError(f"Invalid current_node: {self.current_node}")
 
+        distances = np.zeros(self.max_points, dtype=np.float32)
+        visited_mask = np.zeros(self.max_points, dtype=np.float32)
         # goal node excluded from observation because it is reached automatically
         for idx in range(self.num_points):
             node_index = idx +1
@@ -258,9 +281,10 @@ class TSPEnvironment:
                 distances[idx] = 0.0
                 visited_mask[idx] = 1.0
             else:
-                distances[idx] = self._euclidean_distance(self.current_node,node_index)
+                max_dist = np.sqrt((self.x_max - self.x_min)**2 + (self.y_max - self.y_min)**2)
+                # Normalize distances to [0,1] for more stable learning
+                distances[idx] = self._euclidean_distance(self.current_node, node_index) / max_dist                
                 visited_mask[idx] = 0.0
-        
         observation = np.concatenate([distances, visited_mask])
 
         return observation
@@ -269,6 +293,8 @@ class TSPEnvironment:
         """
         Computes Euclidean distance between two nodes.
         """
+        if i >= len(self.nodes) or j >= len(self.nodes):
+            raise IndexError(f"Invalid indices i={i}, j={j}, len={len(self.nodes)}")
         return np.sqrt(np.sum((self.nodes[i]-self.nodes[j])**2))
 
     def render(self):
