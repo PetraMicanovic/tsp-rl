@@ -40,7 +40,7 @@ All methods use discrete state-action tables (no neural networks).
 ## Reward Function
 
 The reward is defined as the negative Euclidean distance for each move.
-Invalid actions (revisiting already visited nodes) receive a penalty of -10.
+Invalid actions (revisiting already visited nodes) receive a penalty of -200.
 The episode terminates when the goal is reached.
 
 This formulation directly minimizes the total traveled distance. The cumulative reward corresponds to the negative total path length.
