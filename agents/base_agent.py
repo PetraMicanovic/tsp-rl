@@ -57,16 +57,23 @@ class BaseAgent(ABC):
         state: tuple
             (distances, visited_mask)
         """
-        observation = self.env._get_observation()
-        observation = np.array(observation)
+        current_node = self.env.current_node
 
-        half = len(observation) // 2
-        distances = observation[:half]
-        visited_mask = observation[half:]
-        np.round(distances / 5) * 5
-        
-        return (tuple(distances.tolist()), tuple(visited_mask.tolist()))
-    
+        visited_mask = tuple(
+            1 if (idx + 1) in self.env.visited else 0
+            for idx in range(self.env.num_points)
+        )
+
+        remaining = self.env.num_points - sum(visited_mask)
+
+        goal_index = len(self.env.nodes) - 1
+        dist_to_goal = self.env._euclidean_distance(current_node, goal_index)
+
+        max_dist = np.sqrt((self.env.x_max - self.env.x_min)**2 + (self.env.y_max - self.env.y_min)**2)
+        dist_to_goal = round(dist_to_goal / max_dist, 2)
+
+        return (current_node, visited_mask, remaining, dist_to_goal)
+            
     def update_q(self, state, action, value):
         """
         Update the Q-table entry for a given state-action pair.
@@ -104,7 +111,7 @@ class BaseAgent(ABC):
             self.Q[state] = {}
 
         if action not in self.Q[state]:
-            self.Q[state][action] = 0.0
+            self.Q[state][action] = -1.0
 
         return self.Q[state][action]
     
@@ -177,8 +184,8 @@ class BaseAgent(ABC):
         best_value = float("-inf")
 
         for action in valid_actions:
+            distance = self.env._euclidean_distance(self.env.current_node, action + 1)
             value = self.get_q_value(state, action)
-
             if value > best_value:
                 best_value = value
                 best_actions = [action]
