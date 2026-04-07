@@ -127,21 +127,19 @@ class DoubleQLearningAgent(BaseAgent):
         if random.random() < self.epsilon:
             return random.choice(valid_actions)
         
-        # Randomly choose which Q-table to use for action selection
-        if random.random() < 0.5:
-            q_func = self.get_q_value
-        else:
-            q_func = self.get_q2_value
-        
         best_action = valid_actions[0]
-        best_value = q_func(state, best_action)
-
-        for action in valid_actions[1:]:
-            value = q_func(state, action)
+        best_value = self.get_combined_q(state, best_action)
+        # tie-breaking random
+        best_actions = []
+        for action in valid_actions:
+            value = self.get_combined_q(state, action)
             if value > best_value:
                 best_value = value
-                best_action = action
-        return best_action
+                best_actions = [action]
+            elif value == best_value:
+                best_actions.append(action)
+                
+        return random.choice(best_actions)
     
     def train(self, episodes, num_points = 5):
         """
