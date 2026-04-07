@@ -46,26 +46,30 @@ class BaseAgent(ABC):
         """
         Construct the current state representation.
 
-        The state consist of:
-            - Euclidean distances to all intermediate nodes
-            - bitmask representing visited nodes
-
-        Each bit in the mask indicates whether a node has been visited.
-        Since distances are continuous values, we apply rounding to discretize the state space and make tabular RL feasible.
+        The state consists of:
+            - current_node: index of the node where the agent is currently located
+            - visited_mask: binary tuple indicating which intermediate nodes have been visited
+            - remaining: number of nodes that still need to be visited
+            - dist_to_goal: normalized Euclidean distance from the current node to the goal
 
         Returns
         state: tuple
-            (distances, visited_mask)
+            (current_node, visited_mask, remaining, dist_to_goal)
         """
         current_node = self.env.current_node
 
-        visited_mask = tuple(
-            1 if (idx + 1) in self.env.visited else 0
-            for idx in range(self.env.num_points)
-        )
+        visited_mask = []
+        for idx in range(self.env.num_points):
+            if (idx + 1) in self.env.visited:
+                visited_mask.append(1)
+            else:
+                visited_mask.append(0)
+
+        visited_mask = tuple(visited_mask)
 
         remaining = self.env.num_points - sum(visited_mask)
 
+        #Distance to goal(normalized to [0,1])
         goal_index = len(self.env.nodes) - 1
         dist_to_goal = self.env._euclidean_distance(current_node, goal_index)
 
