@@ -175,15 +175,6 @@ class TSPEnvironment:
         truncated: bool
         info: dict
         """
-        # Check for invalid action index
-        if action < 0 or action >= self.num_points:
-            reward = self.invalid_action_penalty
-            observation = self._get_observation()
-            return observation, reward, False, False, {}
-        
-        # Convert action to node index
-        action = action + 1
-
         if self.nodes is None:
             raise RuntimeError("Environment must be reset before stepping.")
         
@@ -192,16 +183,24 @@ class TSPEnvironment:
 
         self.steps += 1
 
+        # Check for invalid action index
+        if action < 0 or action >= self.num_points:
+            reward = self.invalid_action_penalty
+            observation = self._get_observation()
+            return observation, reward, False, False, {}
+        
+        # Convert action to node index
+        node_index = action + 1
+
         # Check if node was already visited
-        if action in self.visited:
+        if node_index in self.visited:
             reward = self.invalid_action_penalty
             if self.steps >= self.max_steps:
-                return self._get_observation(), reward, False, True, {}
-
-            return self._get_observation(), reward, False, False, {}
+                truncated = True
+            return self._get_observation(), reward, False, truncated, {}
 
         # distance reward
-        distance = self._euclidean_distance(self.current_node, action)
+        distance = self._euclidean_distance(self.current_node, node_index)
         reward = -distance
 
         # Small step penalty to encourage shorter tours
@@ -209,29 +208,41 @@ class TSPEnvironment:
 
         # Update environment state
         self.total_distance += distance
-        self.current_node = action
-        self.visited.add(action)
-        self.path.append(action)
+        self.current_node = node_index
+        self.visited.add(node_index)
+        self.path.append(node_index)
 
         # reward shaping
-        unvisited = [i for i in range(1, len(self.nodes)-1) if i not in self.visited]
+        unvisited = []
 
-        if unvisited:
-            nearest = min(unvisited, key=lambda i: self._euclidean_distance(action, i))
+        for i in range (1, len(self.nodes)-1):
+            if i not in self.visited:
+                unvisited.append(i)
+
+        if len(unvisited) > 0:
+            nearest = unvisited[0]
+            min_distance = self._euclidean_distance(node_index, nearest)
+
+            for i in range (1, len(unvisited)):
+                d = self._euclidean_distance(node_index, unvisited[i])
+                if d < min_distance:
+                    min_distance = d
+                    nearest = unvisited[i]
+
             # Encourage moving toward nearest unvisited node
-            reward += -0.05 * self._euclidean_distance(action, nearest)
+            reward += -0.05 * min_distance
 
-        if self.current_node is None or self.current_node >= len(self.nodes):
+        if self.current_node >= len(self.nodes):
             raise ValueError(f"Invalid current_node: {self.current_node}")
 
         # Termination condition
         # Check if all intermediate nodes have been visited
         if len(self.visited) == len(self.nodes) - 1:
             goal_index = len(self.nodes) - 1
-            distance = self._euclidean_distance(self.current_node, goal_index)
+            goal_distance = self._euclidean_distance(self.current_node, goal_index)
             
-            self.total_distance += distance
-            reward += -distance
+            self.total_distance += goal_distance
+            reward += -goal_distance
 
             # Large bonus for completing the tour
             reward += 500 / (1 + self.total_distance)
@@ -274,6 +285,7 @@ class TSPEnvironment:
 
         distances = np.zeros(self.max_points, dtype=np.float32)
         visited_mask = np.zeros(self.max_points, dtype=np.float32)
+        
         # goal node excluded from observation because it is reached automatically
         for idx in range(self.num_points):
             node_index = idx +1
@@ -285,7 +297,7 @@ class TSPEnvironment:
                 # Normalize distances to [0,1] for more stable learning
                 distances[idx] = self._euclidean_distance(self.current_node, node_index) / max_dist                
                 visited_mask[idx] = 0.0
-        observation = np.concatenate([distances, visited_mask])
+        observation = np.concatenate(distances, visited_mask)
 
         return observation
     
