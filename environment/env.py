@@ -297,7 +297,7 @@ class TSPEnvironment:
                 # Normalize distances to [0,1] for more stable learning
                 distances[idx] = self._euclidean_distance(self.current_node, node_index) / max_dist                
                 visited_mask[idx] = 0.0
-        observation = np.concatenate(distances, visited_mask)
+        observation = np.concatenate((distances, visited_mask))
 
         return observation
     
