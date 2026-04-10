@@ -286,6 +286,8 @@ class TSPEnvironment:
         distances = np.zeros(self.max_points, dtype=np.float32)
         visited_mask = np.zeros(self.max_points, dtype=np.float32)
         
+        max_dist = np.sqrt((self.x_max - self.x_min)**2 + (self.y_max - self.y_min)**2)
+
         # goal node excluded from observation because it is reached automatically
         for idx in range(self.num_points):
             node_index = idx +1
@@ -293,7 +295,6 @@ class TSPEnvironment:
                 distances[idx] = 0.0
                 visited_mask[idx] = 1.0
             else:
-                max_dist = np.sqrt((self.x_max - self.x_min)**2 + (self.y_max - self.y_min)**2)
                 # Normalize distances to [0,1] for more stable learning
                 distances[idx] = self._euclidean_distance(self.current_node, node_index) / max_dist                
                 visited_mask[idx] = 0.0
