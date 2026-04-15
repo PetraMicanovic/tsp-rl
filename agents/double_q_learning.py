@@ -127,10 +127,10 @@ class DoubleQLearningAgent(BaseAgent):
         if random.random() < self.epsilon:
             return random.choice(valid_actions)
         
-        best_action = valid_actions[0]
-        best_value = self.get_combined_q(state, best_action)
         # tie-breaking random
+        best_value = float("-inf")
         best_actions = []
+
         for action in valid_actions:
             value = self.get_combined_q(state, action)
             if value > best_value:
@@ -183,7 +183,7 @@ class DoubleQLearningAgent(BaseAgent):
                             best_next = self.best_action_from_q(next_state, next_valid_actions, self.get_q_value)
                             next_q = self.get_q2_value(next_state, best_next)
                         else:
-                            next_q = 0
+                            next_q = 0.0
 
                         current_q = self.get_q_value(state, action)
                         # Double Q-learning update rule
@@ -195,7 +195,7 @@ class DoubleQLearningAgent(BaseAgent):
                             best_next = self.best_action_from_q(next_state, next_valid_actions, self.get_q2_value)
                             next_q = self.get_q_value(next_state, best_next)
                         else:
-                            next_q = 0
+                            next_q = 0.0
 
                         current_q = self.get_q2_value(state, action)
                         new_q = current_q + self.alpha * (reward + self.gamma * next_q - current_q)
