@@ -58,7 +58,7 @@ class NStepSARSAAgent(BaseAgent):
             # Store trajectory (states, actions, rewards)
             states =[state]
             actions = [action]
-            rewards = [0]
+            rewards = [0.0]
 
             # T represents the time step when the episode terminates
             T = float("inf")
@@ -100,7 +100,7 @@ class NStepSARSAAgent(BaseAgent):
                     action_tau = actions[tau]
 
                     # Clip return to avoid large updates and improve numerical stability
-                    G = max(-1000, min(1000,G))
+                    G = max(-1000.0, min(1000.0, G))
 
                     current_q = self.get_q_value(state_tau, action_tau)
                     new_q = current_q + self.alpha * (G - current_q)
