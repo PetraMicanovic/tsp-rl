@@ -25,6 +25,7 @@ class QLearningAgent(BaseAgent):
             # Reset environment
             observation, _ = self.env.reset(num_points = num_points)
 
+            state = self.get_state()
             terminated = False
             truncated = False
 
@@ -33,7 +34,6 @@ class QLearningAgent(BaseAgent):
             # Episode loop
             while not (terminated or truncated):
 
-                state = self.get_state()
                 valid_actions = self.get_valid_actions()
 
                 if not valid_actions:
@@ -42,6 +42,7 @@ class QLearningAgent(BaseAgent):
 
                 # Execute action
                 observation, reward, terminated, truncated, _ = self.env.step(action)
+                total_reward += reward
 
                 next_state = self.get_state()
 
@@ -56,7 +57,7 @@ class QLearningAgent(BaseAgent):
                         max_next_q = q
 
                 if max_next_q == float("-inf"):
-                    max_next_q = 0
+                    max_next_q = 0.0
 
                 current_q = self.get_q_value(state, action)
 
@@ -64,9 +65,7 @@ class QLearningAgent(BaseAgent):
                 new_q = current_q + self.alpha * (reward + self.gamma * max_next_q - current_q)
 
                 self.update_q(state, action, new_q)
-
-                total_reward += reward
-
+                state = next_state
             episode_rewards.append(total_reward)
             self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
         return episode_rewards
