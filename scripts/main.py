@@ -241,13 +241,15 @@ def evaluate_policy(env_class, agent, num_points, runs=5):
 
         while not (terminated or truncated) and steps < max_steps:
             valid_actions = agent.get_valid_actions()
-            steps += 1
+            
             if not valid_actions:
                 break
 
             action = greedy_action(agent, state, valid_actions)
             _, _, terminated, truncated, _ = env.step(action)
             state = agent.get_state()
+            
+            steps += 1
 
         rl_distances.append(env.total_distance)
 
@@ -300,8 +302,6 @@ def run_experiment(agent_name, param_name, values, config, episodes, num_points)
         print(f"{agent_name} with {param_name} = {v}")
 
         local_config = copy.deepcopy(config)
-        env = TSPEnvironment("config.json")
-        env.reset(num_points)
 
         if param_name == "epsilon_decay":
             local_config["training"]["epsilon_decay"] = v
@@ -310,6 +310,8 @@ def run_experiment(agent_name, param_name, values, config, episodes, num_points)
         elif param_name == "n":
             local_config["algorithms"]["n_step_sarsa"]["n"] = v
 
+        env = TSPEnvironment("config.json")
+        env.reset(num_points)
         agent = create_agent(agent_name, env, local_config)
         rewards = agent.train(episodes, num_points=num_points)
 
@@ -383,12 +385,11 @@ def main():
                     valid_actions = agent.get_valid_actions()
                     # if no valid actions -> force termination
                     if not valid_actions:
-                        terminated = True
-                        continue 
+                        break
 
                     action = greedy_action(agent, state, valid_actions)
 
-                    obs, reward, terminated, truncated, info = env.step(action)
+                    _, _, terminated, truncated, _ = env.step(action)
                     state = agent.get_state()
 
                 # Debug final route
@@ -397,11 +398,11 @@ def main():
 
                 rl_mean, rl_std, nn_mean, rand_mean = evaluate_policy(TSPEnvironment, agent, num_points, runs=5)
 
+                improvement = (nn_mean - rl_mean) / (nn_mean + 1e-8) * 100
+                
                 print(f"RL average distance: {rl_mean:.2f} ± {rl_std:.2f}")
                 print(f"NN average distance: {nn_mean:.2f}")
                 print(f"Random average distance: {rand_mean:.2f}")
-
-                improvement = (nn_mean - rl_mean) / (nn_mean + 1e-8) * 100
                 print(f"Improvement over NN: {improvement:.2f}%")
                 # Visualization
                 if len(env.path) > 1:
@@ -409,7 +410,7 @@ def main():
                     visualizer.plot_route(env.path, algorithm_name, num_points)
                     visualizer.animate_route(env.path, algorithm_name, num_points)
 
-        if config["evaluation"]["compare_algorithms"]:
+        if config["evaluation"]["compare_algorithms"] and all_results[num_points]:
             plotter.compare_algorithms(all_results[num_points],num_points)
     plotter.compare_N_for_each_algorithm(all_results)
 
