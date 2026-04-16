@@ -57,6 +57,7 @@ class BaseAgent(ABC):
             (current_node, visited_mask, remaining, dist_to_goal)
         """
         current_node = self.env.current_node
+        max_dist = self.env.max_dist
 
         visited_mask = []
         for idx in range(self.env.num_points):
@@ -69,13 +70,12 @@ class BaseAgent(ABC):
 
         remaining = self.env.num_points - sum(visited_mask)
 
-        #Distance to goal(normalized to [0,1])
+        # Distance to goal(normalized to [0,1])
         goal_index = len(self.env.nodes) - 1
         dist_to_goal = self.env._euclidean_distance(current_node, goal_index)
 
-        max_dist = np.sqrt((self.env.x_max - self.env.x_min)**2 + (self.env.y_max - self.env.y_min)**2)
         dist_to_goal = round(dist_to_goal / max_dist, 2)
-
+        
         return (current_node, visited_mask, remaining, dist_to_goal)
             
     def update_q(self, state, action, value):
@@ -115,7 +115,7 @@ class BaseAgent(ABC):
             self.Q[state] = {}
 
         if action not in self.Q[state]:
-            self.Q[state][action] = -1.0
+            self.Q[state][action] = 0.0
 
         return self.Q[state][action]
     
@@ -184,11 +184,10 @@ class BaseAgent(ABC):
             return random.choice(valid_actions)
         
         # choose the action with the highest Q-value
-        best_actions = []
         best_value = float("-inf")
+        best_actions = []
 
         for action in valid_actions:
-            distance = self.env._euclidean_distance(self.env.current_node, action + 1)
             value = self.get_q_value(state, action)
             if value > best_value:
                 best_value = value
