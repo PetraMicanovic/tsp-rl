@@ -47,6 +47,9 @@ class TSPEnvironment:
         self.seed = environment_configuration["random_seed"]
         self.random_generator = np.random.default_rng(self.seed)
 
+        # Maximum possible distance(diagonal of the workspace)
+        self.max_dist = np.sqrt((self.x_max - self.x_min)**2 + (self.y_max - self.y_min)**2)
+
         # Environment state variables
         self.nodes = None
         self.current_node = None
@@ -56,6 +59,7 @@ class TSPEnvironment:
         self.steps = None
         self.path = None
         self.episode_reward = None
+        self.num_points = None
 
         self.max_points = max(self.allowed_points)
         
@@ -199,12 +203,13 @@ class TSPEnvironment:
                 truncated = True
             return self._get_observation(), reward, False, truncated, {}
 
-        # distance reward
+        # Primary reward: negative travel distance
         distance = self._euclidean_distance(self.current_node, node_index)
-        reward = -distance
+        # normalize by max possible distance
+        reward = - (distance/self.max_dist)
 
         # Small step penalty to encourage shorter tours
-        reward -= 0.1
+        reward -= 0.1 / self.num_points
 
         # Update environment state
         self.total_distance += distance
@@ -230,7 +235,7 @@ class TSPEnvironment:
                     nearest = unvisited[i]
 
             # Encourage moving toward nearest unvisited node
-            reward += -0.05 * min_distance
+            reward += -0.05 * (min_distance / self.max_dist)
 
         if self.current_node >= len(self.nodes):
             raise ValueError(f"Invalid current_node: {self.current_node}")
@@ -242,7 +247,7 @@ class TSPEnvironment:
             goal_distance = self._euclidean_distance(self.current_node, goal_index)
             
             self.total_distance += goal_distance
-            reward += -goal_distance
+            reward += -goal_distance / self.max_dist
 
             # Large bonus for completing the tour
             reward += 500 / (1 + self.total_distance)
@@ -253,13 +258,12 @@ class TSPEnvironment:
             terminated = True
 
         # Truncation condition
-        if self.steps >= self.max_steps:
+        if self.steps >= self.max_steps and not terminated:
             truncated = True
 
-            # Check if all nodes were visited
-            if len(self.visited) != len(self.nodes) - 1:
-                # Penalty if tour is incomplete
-                reward += -self.total_distance
+            # Penalize incomplete tour proportional to how many nodes remain unvisited
+            remaining_fraction = (len(self.nodes) - 1 - len(self.visited)) / self.num_points
+            reward -= remaining_fraction * 2.0
         
         observation = self._get_observation()
         self.episode_reward += reward
@@ -286,8 +290,6 @@ class TSPEnvironment:
         distances = np.zeros(self.max_points, dtype=np.float32)
         visited_mask = np.zeros(self.max_points, dtype=np.float32)
         
-        max_dist = np.sqrt((self.x_max - self.x_min)**2 + (self.y_max - self.y_min)**2)
-
         # goal node excluded from observation because it is reached automatically
         for idx in range(self.num_points):
             node_index = idx +1
@@ -296,7 +298,7 @@ class TSPEnvironment:
                 visited_mask[idx] = 1.0
             else:
                 # Normalize distances to [0,1] for more stable learning
-                distances[idx] = self._euclidean_distance(self.current_node, node_index) / max_dist                
+                distances[idx] = self._euclidean_distance(self.current_node, node_index) / self.max_dist                
                 visited_mask[idx] = 0.0
         observation = np.concatenate((distances, visited_mask))
 
@@ -304,7 +306,7 @@ class TSPEnvironment:
     
     def _euclidean_distance(self, i, j):
         """
-        Computes Euclidean distance between two nodes.
+        Compute Euclidean distance between nodes i and j.
         """
         if i >= len(self.nodes) or j >= len(self.nodes):
             raise IndexError(f"Invalid indices i={i}, j={j}, len={len(self.nodes)}")
@@ -312,7 +314,7 @@ class TSPEnvironment:
 
     def render(self):
         """
-        Prints current state of the environment.
+        Print current state of the environment.
         """
         print("\n-----ENVIRONMENT STATE------")
         print("Current node: ", self.current_node)
