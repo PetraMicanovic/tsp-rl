@@ -250,7 +250,8 @@ class TSPEnvironment:
             reward += -goal_distance / self.max_dist
 
             # Large bonus for completing the tour
-            reward += 500 / (1 + self.total_distance)
+            normalized_total = self.total_distance / (self.num_points * self.max_dist)
+            reward += 5.0 / (1.0 + normalized_total)
 
             self.current_node = goal_index
             self.path.append(goal_index)
