@@ -1,51 +1,52 @@
 {
   "environment": {
-    "start_position": [0, 0],
-    "goal_position": [100, 100],
-
+    "start_position": [
+      0,
+      0
+    ],
+    "goal_position": [
+      100,
+      100
+    ],
     "x_min": 10,
     "x_max": 90,
     "y_min": 10,
     "y_max": 90,
-
-    "num_intermediate_points": [5, 10, 15, 20],
-
+    "num_intermediate_points": [
+      5,
+      10,
+      15,
+      20
+    ],
     "state_representation": "euclidean_distances",
-
     "random_seed": 42
   },
-
   "reward_function": {
     "type": "negative_euclidean_distance",
     "invalid_action_penalty": -5
   },
-
   "training": {
-    "episodes": 100000,
+    "episodes": 200000,
     "learning_rate": 0.1,
     "discount_factor": 0.99,
-
     "epsilon_start": 1.0,
     "epsilon_min": 0.05,
-    "epsilon_decay": 0.9999
+    "epsilon_decay": 0.99995
   },
-
   "algorithms": {
     "sarsa": true,
     "q_learning": true,
     "double_q_learning": true,
     "n_step_sarsa": {
       "enabled": true,
-      "n": 15
+      "n": 20
     }
   },
-
   "evaluation": {
     "save_results": true,
     "save_final_paths": true,
     "save_reward_curves": true,
     "compare_algorithms": true,
-
     "output_directory": "results"
   }
 }
