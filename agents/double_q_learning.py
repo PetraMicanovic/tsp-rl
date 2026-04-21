@@ -1,6 +1,7 @@
 import random
 from agents.base_agent import BaseAgent
 
+
 class DoubleQLearningAgent(BaseAgent):
     """
     Double Q-Learning agent maintains two separate Q-tables (Q1 and Q2) in order to reduce overestimation bias that appears in standard Q-learning.
@@ -8,6 +9,7 @@ class DoubleQLearningAgent(BaseAgent):
         - one of the Q-tables is randomly selected for update
         - the other Q-table is used to evaluate the next action
     """
+
     def __init__(self, env, alpha, gamma, epsilon, epsilon_min, epsilon_decay):
         """
         Initialize the Double Q-Learning agent.
@@ -51,7 +53,7 @@ class DoubleQLearningAgent(BaseAgent):
             self.Q2[state][action] = 0.0
 
         return self.Q2[state][action]
-    
+
     def update_q2(self, state, action, value):
         """
         Update Q2 value for a specific (state, action).
@@ -66,7 +68,7 @@ class DoubleQLearningAgent(BaseAgent):
         """
         if state not in self.Q2:
             self.Q2[state] = {}
-        
+
         self.Q2[state][action] = value
 
     def get_combined_q(self, state, action):
@@ -87,7 +89,7 @@ class DoubleQLearningAgent(BaseAgent):
             List of valid actions
         q_func: callable
             Function that returns Q-value(e.g. get_q_value or get_q2_value)
-        
+
         Returns
         best_action: int
             Action with the highest Q-value
@@ -102,7 +104,7 @@ class DoubleQLearningAgent(BaseAgent):
                 best_value = value
                 best_action = action
         return best_action
-    
+
     def epsilon_greedy_double(self, state, valid_actions):
         """
         Select an action using epsilon-greedy policy.
@@ -118,15 +120,15 @@ class DoubleQLearningAgent(BaseAgent):
             List of valid actions in the current state
 
         Returns
-        action 
+        action
             Selected action
         """
         if not valid_actions:
             return None
-        
+
         if random.random() < self.epsilon:
             return random.choice(valid_actions)
-        
+
         # tie-breaking random
         best_value = float("-inf")
         best_actions = []
@@ -138,10 +140,10 @@ class DoubleQLearningAgent(BaseAgent):
                 best_actions = [action]
             elif value == best_value:
                 best_actions.append(action)
-                
+
         return random.choice(best_actions)
-    
-    def train(self, episodes, num_points = 5):
+
+    def train(self, episodes, num_points=5):
         """
         Train the agent using Double Q-Learning.
 
@@ -158,7 +160,7 @@ class DoubleQLearningAgent(BaseAgent):
         rewards_per_episode = []
 
         for episode in range(episodes):
-            observation, _ = self.env.reset(num_points = num_points)
+            observation, _ = self.env.reset(num_points=num_points)
             state = self.get_state()
 
             terminated = False
@@ -167,7 +169,7 @@ class DoubleQLearningAgent(BaseAgent):
 
             valid_actions = self.get_valid_actions()
 
-            while not(terminated or truncated):
+            while not (terminated or truncated):
                 action = self.epsilon_greedy_double(state, valid_actions)
                 observation, reward, terminated, truncated, _ = self.env.step(action)
                 next_state = self.get_state()
@@ -180,25 +182,33 @@ class DoubleQLearningAgent(BaseAgent):
                     if random.random() < 0.5:
                         # update Q1
                         if next_valid_actions:
-                            best_next = self.best_action_from_q(next_state, next_valid_actions, self.get_q_value)
+                            best_next = self.best_action_from_q(
+                                next_state, next_valid_actions, self.get_q_value
+                            )
                             next_q = self.get_q2_value(next_state, best_next)
                         else:
                             next_q = 0.0
 
                         current_q = self.get_q_value(state, action)
                         # Double Q-learning update rule
-                        new_q = current_q + self.alpha * (reward + self.gamma * next_q - current_q)
+                        new_q = current_q + self.alpha * (
+                            reward + self.gamma * next_q - current_q
+                        )
                         self.update_q(state, action, new_q)
                     else:
                         if next_valid_actions:
                             # update Q2
-                            best_next = self.best_action_from_q(next_state, next_valid_actions, self.get_q2_value)
+                            best_next = self.best_action_from_q(
+                                next_state, next_valid_actions, self.get_q2_value
+                            )
                             next_q = self.get_q_value(next_state, best_next)
                         else:
                             next_q = 0.0
 
                         current_q = self.get_q2_value(state, action)
-                        new_q = current_q + self.alpha * (reward + self.gamma * next_q - current_q)
+                        new_q = current_q + self.alpha * (
+                            reward + self.gamma * next_q - current_q
+                        )
                         self.update_q2(state, action, new_q)
                     state = next_state
                     valid_actions = next_valid_actions
@@ -208,9 +218,9 @@ class DoubleQLearningAgent(BaseAgent):
                         current_q = self.get_q_value(state, action)
                         new_q = current_q + self.alpha * (reward - current_q)
                         self.update_q(state, action, new_q)
-                    else: 
+                    else:
                         current_q = self.get_q2_value(state, action)
-                        new_q = current_q + self.alpha * (reward  - current_q)
+                        new_q = current_q + self.alpha * (reward - current_q)
                         self.update_q2(state, action, new_q)
                     break
 

@@ -1,10 +1,12 @@
 from agents.base_agent import BaseAgent
 
+
 class QLearningAgent(BaseAgent):
     """
     Q-learning agent implementation.
     """
-    def train(self, episodes, num_points = 5):
+
+    def train(self, episodes, num_points=5):
         """
         Train the agent for a specified number of episodes.
 
@@ -19,11 +21,11 @@ class QLearningAgent(BaseAgent):
             Total reward obtained in each episode.
         """
         episode_rewards = []
-        
+
         # Training loop over episodes
         for episode in range(episodes):
             # Reset environment
-            observation, _ = self.env.reset(num_points = num_points)
+            observation, _ = self.env.reset(num_points=num_points)
 
             state = self.get_state()
             terminated = False
@@ -48,7 +50,7 @@ class QLearningAgent(BaseAgent):
 
                 next_valid_actions = self.get_valid_actions()
 
-                # Compute max Q-value for next state 
+                # Compute max Q-value for next state
 
                 max_next_q = float("-inf")
                 for a in next_valid_actions:
@@ -62,7 +64,9 @@ class QLearningAgent(BaseAgent):
                 current_q = self.get_q_value(state, action)
 
                 # Q-learning update rule
-                new_q = current_q + self.alpha * (reward + self.gamma * max_next_q - current_q)
+                new_q = current_q + self.alpha * (
+                    reward + self.gamma * max_next_q - current_q
+                )
 
                 self.update_q(state, action, new_q)
                 state = next_state

@@ -16,7 +16,8 @@ from agents.n_step_sarsa import NStepSARSAAgent
 from utils.training_plotter import TrainingPlotter
 from utils.tsp_visualizer import TSPVisualizer
 
-def load_config(path = "config.json"):
+
+def load_config(path="config.json"):
     """
     Load configuration file.
 
@@ -27,9 +28,10 @@ def load_config(path = "config.json"):
     dict
         Parsed configuration dictionary.
     """
-    with open(path, 'r') as f:
+    with open(path, "r") as f:
         return json.load(f)
-    
+
+
 def create_agent(name, env, config):
     """
     Function for creating RL agents.
@@ -56,13 +58,18 @@ def create_agent(name, env, config):
     elif name == "q_learning":
         return QLearningAgent(env, alpha, gamma, epsilon, epsilon_min, epsilon_decay)
     elif name == "double_q_learning":
-        return DoubleQLearningAgent(env, alpha, gamma, epsilon, epsilon_min, epsilon_decay)
+        return DoubleQLearningAgent(
+            env, alpha, gamma, epsilon, epsilon_min, epsilon_decay
+        )
     elif name == "n_step_sarsa":
         n = config["algorithms"]["n_step_sarsa"]["n"]
-        return NStepSARSAAgent(env, alpha, gamma, epsilon, epsilon_min, epsilon_decay, n)
+        return NStepSARSAAgent(
+            env, alpha, gamma, epsilon, epsilon_min, epsilon_decay, n
+        )
     else:
         raise ValueError(f"Unknown algorithm: {name}")
-    
+
+
 def greedy_action(agent, state, valid_actions):
     """
     Select the best action deterministically.
@@ -83,7 +90,7 @@ def greedy_action(agent, state, valid_actions):
     """
     if not valid_actions:
         return None
-    
+
     best_actions = []
     best_value = float("-inf")
 
@@ -99,8 +106,9 @@ def greedy_action(agent, state, valid_actions):
 
     if not best_actions:
         return random.choice(valid_actions)
-        
+
     return random.choice(best_actions)
+
 
 def nearest_neighbor(env, num_points):
     """
@@ -133,7 +141,7 @@ def nearest_neighbor(env, num_points):
         valid_actions = []
         for i in range(len(env.nodes) - 1):
             if i not in env.visited:
-                valid_actions.append(i - 1) # convert node index -> action index
+                valid_actions.append(i - 1)  # convert node index -> action index
 
         if not valid_actions:
             break
@@ -153,6 +161,7 @@ def nearest_neighbor(env, num_points):
         _, _, terminated, truncated, _ = env.step(best_action)
 
     return env.total_distance, env.path
+
 
 def random_policy(env, num_points):
     """
@@ -179,9 +188,9 @@ def random_policy(env, num_points):
     while not (terminated or truncated):
         # Build list of valid actions (unvisited nodes)
         valid_actions = []
-        for i in range(1, len(env.nodes)-1):
+        for i in range(1, len(env.nodes) - 1):
             if i not in env.visited:
-                valid_actions.append(i-1)
+                valid_actions.append(i - 1)
 
         if not valid_actions:
             break
@@ -190,6 +199,7 @@ def random_policy(env, num_points):
         _, _, terminated, truncated, _ = env.step(action)
 
     return env.total_distance
+
 
 def evaluate_policy(env_class, agent, num_points, runs=5):
     """
@@ -241,14 +251,14 @@ def evaluate_policy(env_class, agent, num_points, runs=5):
 
         while not (terminated or truncated) and steps < max_steps:
             valid_actions = agent.get_valid_actions()
-            
+
             if not valid_actions:
                 break
 
             action = greedy_action(agent, state, valid_actions)
             _, _, terminated, truncated, _ = env.step(action)
             state = agent.get_state()
-            
+
             steps += 1
 
         rl_distances.append(env.total_distance)
@@ -274,6 +284,7 @@ def evaluate_policy(env_class, agent, num_points, runs=5):
         np.mean(rand_distances),
     )
 
+
 def run_experiment(agent_name, param_name, values, config, episodes, num_points):
     """
     Runs a hyperparameter experiment for a given algorithm.
@@ -286,7 +297,7 @@ def run_experiment(agent_name, param_name, values, config, episodes, num_points)
     values: list
         List of values for the hyperparameter
     config: dict
-        Base configuration 
+        Base configuration
     episodes: int
         Number of training episodes
     num_points: int
@@ -319,10 +330,11 @@ def run_experiment(agent_name, param_name, values, config, episodes, num_points)
 
     return results
 
+
 def main():
     """
     Main experiment pipeline.
-    
+
     Workflow:
     1. Load configuration
     2. Initialize environment
@@ -361,9 +373,9 @@ def main():
 
             env = TSPEnvironment("config.json")
             env.reset(num_points)
-            
+
             agent = create_agent(algorithm_name, env, config)
-            rewards = agent.train(episodes, num_points = num_points)
+            rewards = agent.train(episodes, num_points=num_points)
 
             all_results[num_points][algorithm_name] = rewards
             # Debug info
@@ -396,10 +408,12 @@ def main():
                 print("Final route:", env.path)
                 print("Total distance:", env.total_distance)
 
-                rl_mean, rl_std, nn_mean, rand_mean = evaluate_policy(TSPEnvironment, agent, num_points, runs=5)
+                rl_mean, rl_std, nn_mean, rand_mean = evaluate_policy(
+                    TSPEnvironment, agent, num_points, runs=5
+                )
 
                 improvement = (nn_mean - rl_mean) / (nn_mean + 1e-8) * 100
-                
+
                 print(f"RL average distance: {rl_mean:.2f} ± {rl_std:.2f}")
                 print(f"NN average distance: {nn_mean:.2f}")
                 print(f"Random average distance: {rand_mean:.2f}")
@@ -411,7 +425,7 @@ def main():
                     visualizer.animate_route(env.path, algorithm_name, num_points)
 
         if config["evaluation"]["compare_algorithms"] and all_results[num_points]:
-            plotter.compare_algorithms(all_results[num_points],num_points)
+            plotter.compare_algorithms(all_results[num_points], num_points)
     plotter.compare_N_for_each_algorithm(all_results)
 
     # Hyperparameter analysis (N = 20)
@@ -420,29 +434,40 @@ def main():
     # Double Q-learning
     ## Epsilon decay
     decay_values = [0.9999, 0.9997, 0.9995]
-    dq_ed_results = run_experiment("double_q_learning", "epsilon_decay", decay_values, config, episodes, 20)
+    dq_ed_results = run_experiment(
+        "double_q_learning", "epsilon_decay", decay_values, config, episodes, 20
+    )
     plotter.compare_algorithms(dq_ed_results, "DoubleQ_epsilon_decay_20")
 
     ## Learning rate
     learning_rate_values = [0.2, 0.1, 0.05]
-    dq_lr_results = run_experiment("double_q_learning", "learning_rate", learning_rate_values, config, episodes, 20)
+    dq_lr_results = run_experiment(
+        "double_q_learning", "learning_rate", learning_rate_values, config, episodes, 20
+    )
     plotter.compare_algorithms(dq_lr_results, "DoubleQ_learning_rate_20")
 
     # n-step SARSA
     ## Epsilon decay
-    nSARSA_ed_results = run_experiment("n_step_sarsa", "epsilon_decay", decay_values, config, episodes, 20)
+    nSARSA_ed_results = run_experiment(
+        "n_step_sarsa", "epsilon_decay", decay_values, config, episodes, 20
+    )
     plotter.compare_algorithms(nSARSA_ed_results, "n_step_SARSA_epsilon_decay_20")
 
     ## Learning rate
-    nSARSA_lr_results = run_experiment("n_step_sarsa", "learning_rate", learning_rate_values, config, episodes, 20)
+    nSARSA_lr_results = run_experiment(
+        "n_step_sarsa", "learning_rate", learning_rate_values, config, episodes, 20
+    )
     plotter.compare_algorithms(nSARSA_lr_results, "n_step_SARSA_learning_rate_20")
 
     ## N
     n_values = [10, 15, 20]
-    nSARSA_n_results = run_experiment("n_step_sarsa", "n", n_values, config, episodes, 20)
+    nSARSA_n_results = run_experiment(
+        "n_step_sarsa", "n", n_values, config, episodes, 20
+    )
     plotter.compare_algorithms(nSARSA_n_results, "n_step_SARSA_n_20")
 
     print("\n----------- Training complete -----------------")
 
-if  __name__ == "__main__":
+
+if __name__ == "__main__":
     main()

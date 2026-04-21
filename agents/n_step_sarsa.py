@@ -1,11 +1,13 @@
 from agents.base_agent import BaseAgent
 
+
 class NStepSARSAAgent(BaseAgent):
     """
     The n-step SARSA algorithm extends the standard SARSA method by using multiple future rewards (n steps) when updating Q-values.
     The update uses accumulated rewards over the next n steps.
     """
-    def __init__(self, env, alpha, gamma, epsilon, epsilon_min, epsilon_decay, n = 10):
+
+    def __init__(self, env, alpha, gamma, epsilon, epsilon_min, epsilon_decay, n=10):
         """
         Initialize the n-step SARSA agent.
 
@@ -26,9 +28,9 @@ class NStepSARSAAgent(BaseAgent):
             Number of steps used to compute the n-step return
         """
         super().__init__(env, alpha, gamma, epsilon, epsilon_min, epsilon_decay)
-        self.n  = n
-    
-    def train(self, episodes, num_points = 5):
+        self.n = n
+
+    def train(self, episodes, num_points=5):
         """
         Train the agent using the n-step SARSA algorithm.
 
@@ -45,7 +47,7 @@ class NStepSARSAAgent(BaseAgent):
         rewards_per_episode = []
 
         for episode in range(episodes):
-            observation, _ = self.env.reset(num_points = num_points)
+            observation, _ = self.env.reset(num_points=num_points)
             state = self.get_state()
             valid_actions = self.get_valid_actions()
 
@@ -56,7 +58,7 @@ class NStepSARSAAgent(BaseAgent):
             action = self.epsilon_greedy(state, valid_actions)
 
             # Store trajectory (states, actions, rewards)
-            states =[state]
+            states = [state]
             actions = [action]
             rewards = [0.0]
 
@@ -69,7 +71,9 @@ class NStepSARSAAgent(BaseAgent):
 
             while True:
                 if t < T:
-                    observation, reward, terminated, truncated, _ = self.env.step(actions[t])
+                    observation, reward, terminated, truncated, _ = self.env.step(
+                        actions[t]
+                    )
 
                     total_reward += reward
                     rewards.append(reward)
@@ -82,7 +86,9 @@ class NStepSARSAAgent(BaseAgent):
                         if not next_valid_actions:
                             T = t + 1
                         else:
-                            next_action = self.epsilon_greedy(next_state, next_valid_actions)
+                            next_action = self.epsilon_greedy(
+                                next_state, next_valid_actions
+                            )
                             states.append(next_state)
                             actions.append(next_action)
                 # Time index for updating Q-values
@@ -94,7 +100,9 @@ class NStepSARSAAgent(BaseAgent):
                         G += (self.gamma ** (i - tau - 1)) * rewards[i]
 
                     if tau + self.n < T:
-                        G += (self.gamma ** self.n) * self.get_q_value(states[tau + self.n], actions[tau + self.n]) 
+                        G += (self.gamma**self.n) * self.get_q_value(
+                            states[tau + self.n], actions[tau + self.n]
+                        )
 
                     state_tau = states[tau]
                     action_tau = actions[tau]
@@ -110,7 +118,7 @@ class NStepSARSAAgent(BaseAgent):
                     break
 
                 t += 1
-            
+
             rewards_per_episode.append(total_reward)
             self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
         return rewards_per_episode

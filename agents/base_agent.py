@@ -2,6 +2,7 @@ import random
 from abc import ABC, abstractmethod
 import numpy as np
 
+
 class BaseAgent(ABC):
     """
     Abstract base class for reinforcement learning agents. This class provides common functionality for SARSA and Q-learning algorithms.
@@ -19,7 +20,7 @@ class BaseAgent(ABC):
         Parameters
         env: TSP environment
             Environment instance the agent interacts with
-        alpha: float 
+        alpha: float
             Learning rate (0 < alpha <= 1)
         gamma: float
             Discount factor for future rewards (0 <= gamma <= 1)
@@ -75,9 +76,9 @@ class BaseAgent(ABC):
         dist_to_goal = self.env._euclidean_distance(current_node, goal_index)
 
         dist_to_goal = round(dist_to_goal / max_dist, 2)
-        
+
         return (current_node, visited_mask, remaining, dist_to_goal)
-            
+
     def update_q(self, state, action, value):
         """
         Update the Q-table entry for a given state-action pair.
@@ -106,7 +107,7 @@ class BaseAgent(ABC):
             State key
         action: int
             Action index
-        
+
         Returns
         float
             Q-value for the given state and action
@@ -118,7 +119,7 @@ class BaseAgent(ABC):
             self.Q[state][action] = 0.0
 
         return self.Q[state][action]
-    
+
     def get_valid_actions(self):
         """
         Generate the list of valid actions.
@@ -139,20 +140,20 @@ class BaseAgent(ABC):
                 valid_actions.append(action)
 
         return valid_actions
-    
+
     def get_combined_q(self, state, action):
         """
         Return the estimated value of a state-action pair.
 
         For a standard agents(Q-learning, SARSA), this is just the single Q-table value.
         This method exists so that diffrent agents can define their own way of combining value estimates.
-        
+
         Parameters
         state: tuple
             State key
         action: int
             Action index
-        
+
         Returns
         float
             Q-value for the given state and action
@@ -178,11 +179,11 @@ class BaseAgent(ABC):
         """
         if not valid_actions:
             return None
-        
+
         # choose a random action
         if random.random() < self.epsilon:
             return random.choice(valid_actions)
-        
+
         # choose the action with the highest Q-value
         best_value = float("-inf")
         best_actions = []
@@ -194,11 +195,11 @@ class BaseAgent(ABC):
                 best_actions = [action]
             elif value == best_value:
                 best_actions.append(action)
-        
+
         return random.choice(best_actions)
-    
+
     @abstractmethod
-    def train(self, episodes, num_points = 5):
+    def train(self, episodes, num_points=5):
         """
         Train the agent.
 

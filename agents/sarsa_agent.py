@@ -1,10 +1,12 @@
 from agents.base_agent import BaseAgent
 
+
 class SARSAAgent(BaseAgent):
     """
     This class implements the SARSA(State-Action-Reward-State-Action) on-policy reinforcement learning agent.
     """
-    def train(self, episodes, num_points = 5):
+
+    def train(self, episodes, num_points=5):
         """
         Train the SARSA agent.
 
@@ -16,16 +18,16 @@ class SARSAAgent(BaseAgent):
 
         Returns
         rewards_per_episode: list
-            Total reward collected in each episode. 
+            Total reward collected in each episode.
         """
         rewards_per_episode = []
 
         for episode in range(episodes):
-            observation, _ = self.env.reset(num_points = num_points)
+            observation, _ = self.env.reset(num_points=num_points)
             state = self.get_state()
             valid_actions = self.get_valid_actions()
 
-            # Select the first action using the epsilon-greedy policy 
+            # Select the first action using the epsilon-greedy policy
             action = self.epsilon_greedy(state, valid_actions)
 
             terminated = False
@@ -57,7 +59,7 @@ class SARSAAgent(BaseAgent):
                     state = next_state
                     action = next_action
                 else:
-                    # Update rule for terminal state (no next action) 
+                    # Update rule for terminal state (no next action)
                     current_q = self.get_q_value(state, action)
                     new_q = current_q + self.alpha * (reward - current_q)
                     self.update_q(state, action, new_q)
