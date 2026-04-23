@@ -198,9 +198,6 @@ class TSPEnvironment:
         # normalize by max possible distance
         reward = -(distance / self.max_dist)
 
-        # Small step penalty to encourage shorter tours
-        reward -= 0.1 / self.num_points
-
         # Update environment state
         self.total_distance += distance
         self.current_node = node_index
@@ -223,9 +220,6 @@ class TSPEnvironment:
                 if d < min_distance:
                     min_distance = d
                     nearest = unvisited[i]
-
-            # Encourage moving toward nearest unvisited node
-            reward += -0.05 * (min_distance / self.max_dist)
 
         if self.current_node >= len(self.nodes):
             raise ValueError(f"Invalid current_node: {self.current_node}")
@@ -251,12 +245,6 @@ class TSPEnvironment:
         # Truncation condition
         if self.steps >= self.max_steps and not terminated:
             truncated = True
-
-            # Penalize incomplete tour proportional to how many nodes remain unvisited
-            remaining_fraction = (
-                len(self.nodes) - 1 - len(self.visited)
-            ) / self.num_points
-            reward -= remaining_fraction * 2.0
 
         observation = self._get_observation()
         self.episode_reward += reward
