@@ -146,7 +146,9 @@ To run training and evaluation:
 ```bash 
 python main.py 
 ```
+
 Configuration is loaded from `config.json`. To change the number of episodes, learning rate, which algorithms to run, or the value of n, edit that file directly.
+
 ---
 
 ## Results and Visualization
