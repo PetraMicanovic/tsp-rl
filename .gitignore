@@ -19,7 +19,6 @@ Thumbs.db
 .idea/
 
 # Reinforcement Learning outputs
-results/
 logs/
 runs/
 checkpoints/
